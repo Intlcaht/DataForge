@@ -1,4 +1,4 @@
-from app.rest.v1.endpoints import health, items
+from .endpoints import health, items
 from fastapi import APIRouter
 
 api_v1_router = APIRouter()

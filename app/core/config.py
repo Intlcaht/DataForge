@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, AnyHttpUrl
+from pydantic import  AnyHttpUrl
+from pydantic.settings import BaseSettings # type: ignore
 from typing import List, Optional
 
 class Settings(BaseSettings):

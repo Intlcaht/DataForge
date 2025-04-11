@@ -1,0 +1,308 @@
+controls:
+  access_controls:
+    enabled: true
+    ip_whitelist:
+    - 192.168.1.0/24
+    - 10.0.0.0/16
+    least_privilege: true
+  audit_logging:
+    destinations:
+    - S3
+    enabled: true
+  backups:
+    enabled: true
+    retention_days: 30
+    test_restore: true
+  compliance:
+    enabled: true
+    gdpr: true
+    pci_dss: false
+    soc2: true
+  migration_management:
+    auto_diff: true
+    enabled: true
+    require_review: true
+  monitoring:
+    enabled: true
+    integrations:
+    - Prometheus
+environments:
+  development:
+    backup_schedule: weekly
+    controls:
+      audit_logging: null
+  production:
+    backup_schedule: daily
+    controls:
+      access_controls:
+        ip_whitelist:
+        - 10.0.0.0/16
+      audit_logging: null
+metadata:
+  environment: development
+  migration_plan_enabled: true
+  tags:
+  - secure
+  - central-config
+  version_control_enabled: true
+storage:
+  influxdb:
+    controls:
+    - description: Regularly review and rotate tokens to minimize the risk of unauthorized
+        access.
+      name: token_rotation
+    databases:
+      metrics:
+        bucket: app_metrics
+        location: local
+        org: dev_org
+        users:
+        - permissions:
+          - write
+          token: ${METRICS_WRITER_TOKEN}
+          username: metrics_writer
+      monitoring:
+        bucket: sys_monitoring
+        location: local
+        org: dev_org
+        users:
+        - permissions:
+          - read
+          token: ${MONITORING_READER_TOKEN}
+          username: monitoring_reader
+    locations:
+      local:
+        admin_token: ${INFLUXDB_ADMIN_TOKEN}
+        host: localhost
+        port: 8086
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1
+  mariadb:
+    controls:
+    - description: Ensure automated backups are configured to prevent data loss.
+      name: backup_automation
+    - description: Restrict access to specific IP addresses to enhance security.
+      name: ip_whitelisting
+    - description: Specify the location of migration files to maintain a clear state
+        of database schema changes.
+      location: /path/to/mariadb/migrations
+      name: migration_files
+    databases:
+      analytics:
+        location: local
+        users:
+        - password: ${ANALYTICS_READER_PASSWORD}
+          permissions:
+          - SELECT
+          username: analytics_reader
+      wordpress:
+        location: us-west
+        users:
+        - password: ${WP_ADMIN_PASSWORD}
+          permissions:
+          - ALL PRIVILEGES
+          username: wp_admin
+    locations:
+      local:
+        admin: ${MARIADB_ADMIN}
+        admin_password: ${MARIADB_ADMIN_PASSWORD}
+        host: localhost
+        port: 3306
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1
+      us-west:
+        admin: ${MARIADB_ADMIN}
+        admin_password: ${MARIADB_ADMIN_PASSWORD}
+        host: us-west-mariadb.example.com
+        port: 3306
+        scaling:
+          auto_scaling: false
+          max_instances: 3
+          min_instances: 1
+  mongodb:
+    controls:
+    - description: Set up replication for high availability and data redundancy.
+      name: replication_setup
+    - description: Specify the location of migration files to maintain a clear state
+        of database schema changes.
+      location: /path/to/mongodb/migrations
+      name: migration_files
+    databases:
+      logs:
+        location: local
+        users:
+        - password: ${MONGO_LOG_READER_PASSWORD}
+          roles:
+          - db: logs
+            role: read
+          username: log_reader
+      pbfr:
+        location: ap-south
+        users:
+        - password: ${MONGO_APP_USER_PASSWORD}
+          roles:
+          - db: app_data
+            role: readWrite
+          username: app_user
+        - password: ${MONGO_APP_MONITOR_PASSWORD}
+          roles:
+          - db: admin
+            role: clusterMonitor
+          username: app_monitor
+    locations:
+      ap-south:
+        admin: ${MONGODB_ADMIN}
+        admin_password: ${MONGODB_ADMIN_PASSWORD}
+        host: ap-south-mongodb.example.com
+        port: 27017
+        scaling:
+          auto_scaling: true
+          max_instances: 8
+          min_instances: 3
+      local:
+        admin: ${MONGODB_ADMIN}
+        admin_password: ${MONGODB_ADMIN_PASSWORD}
+        host: localhost
+        port: 27017
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1
+  neo4j:
+    databases:
+      pipeline_db:
+        location: local
+        users:
+        - password: ${GRAPH_EDITOR_PASSWORD}
+          roles:
+          - editor
+          username: graph_editor
+        - password: ${GRAPH_READER_PASSWORD}
+          roles:
+          - reader
+          username: graph_reader
+    locations:
+      admin: ${NEO4J_ADMIN}
+      admin_password: ${NEO4J_ADMIN_PASSWORD}
+      local:
+        host: localhost
+        port: 7687
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1
+  postgres:
+    controls:
+    - description: Ensure connection pooling is enabled using PgBouncer to manage
+        database connections efficiently.
+      name: connection_pooling
+    - description: Enable audit logging for all databases to track access and modifications.
+      name: audit_logging
+    - description: Specify the location of migration files to maintain a clear state
+        of database schema changes.
+      location: /path/to/postgres/migrations
+      name: migration_files
+    databases:
+      DdQ51olufs:
+        location: local
+        users:
+        - password: ${ADMIN_PASSWORD}
+          permissions:
+          - INSERT
+          - UPDATE
+          - DELETE
+          - SELECT
+          username: admin
+        - password: ${API_PASSWORD}
+          permissions:
+          - INSERT
+          - UPDATE
+          - SELECT
+          username: api
+        - password: ${CLIENT_PASSWORD}
+          permissions:
+          - SELECT
+          username: client
+      bKnfXZklbJ:
+        location: eu-west
+        users:
+        - password: ${REPORT_VIEWER_PASSWORD}
+          permissions:
+          - SELECT
+          username: report_viewer
+      zDssWIM1PA:
+        location: us-east
+        users:
+        - password: ${ADMIN_PASSWORD}
+          permissions:
+          - INSERT
+          - UPDATE
+          - DELETE
+          - SELECT
+          username: admin
+        - password: ${APP_WRITER_PASSWORD}
+          permissions:
+          - INSERT
+          - UPDATE
+          - DELETE
+          username: app_writer
+        - password: ${APP_READER_PASSWORD}
+          permissions:
+          - SELECT
+          username: app_reader
+    locations:
+      eu-west:
+        admin: ${POSTGRES_ADMIN}
+        admin_password: ${POSTGRES_ADMIN_PASSWORD}
+        host: eu-west-postgres.example.com
+        port: 5432
+        scaling:
+          auto_scaling: true
+          max_instances: 5
+          min_instances: 1
+      local:
+        admin: ${POSTGRES_ADMIN}
+        admin_password: ${POSTGRES_ADMIN_PASSWORD}
+        host: localhost
+        port: 5432
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1
+      us-east:
+        admin: ${POSTGRES_ADMIN}
+        admin_password: ${POSTGRES_ADMIN_PASSWORD}
+        host: us-east-postgres.example.com
+        port: 5432
+        scaling:
+          auto_scaling: true
+          max_instances: 10
+          min_instances: 2
+  redis:
+    controls:
+    - description: Integrate with monitoring tools like Prometheus to track performance.
+      name: monitoring_integration
+    databases:
+      cache:
+        location: local
+        users:
+        - acl: on >cache *~* +@write
+          password: ${REDIS_CACHE_PASSWORD}
+      session:
+        location: local
+        users:
+        - acl: on >session *~* +@read
+          password: ${REDIS_SESSION_PASSWORD}
+    locations:
+      local:
+        admin_password: ${REDIS_ADMIN_PASSWORD}
+        host: localhost
+        port: 6379
+        scaling:
+          auto_scaling: false
+          max_instances: 1
+          min_instances: 1

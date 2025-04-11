@@ -50,33 +50,35 @@ def init():
     Returns:
         dict: The loaded configuration from the YAML file
     """
-    from app.core.utils.scripts import run_env_gen, run_db_mng, run_db_ctl
-    from app.core.flow.config_loader import load_config
+    from core.utils.scripts import run_env_gen, run_db_mng, run_db_ctl, run_obfuscator_env
+    from core.flow.config_loader import load_config
     # Define the path to the database configuration YAML file
     # This file contains database connection parameters and other settings
     config_file = "app/db.yml"
     
-    # Generate environment variables (.env file) from the configuration
-    # Arguments:
-    #   - "-c": Flag indicating a config file will follow
-    #   - config_file: Path to the configuration file
-    #   - "-e .env": Output environment file path
-    run_env_gen(["-c "] + [config_file] + ["-e dbstack/.env.gen"])
+    # # Generate environment variables (.env file) from the configuration
+    # # Arguments:
+    # #   - "-c": Flag indicating a config file will follow
+    # #   - config_file: Path to the configuration file
+    # #   - "-e .env": Output environment file path
+    # run_env_gen(["-c "] + [config_file] + ["-e dbstack/.env.gen"])
     
     # Load the configuration from the YAML file into a dictionary
     # This will be used throughout the application for various settings
     config = load_config(config_file=config_file)
     
-    # Initialize database startup with setup mode ("-a s")
-    # This sets up connections
-    run_db_ctl(["-a s"])
+    # # Initialize database startup with setup mode ("-a s")
+    # # This sets up connections
+    # run_db_ctl(["-a s"])
     
-    # Run database provisions based on the configuration
-    # Arguments:
-    #   - "-c": Flag indicating a config file will follow
-    #   - config_file: Path to the configuration file
-    #   - "-p": Flag indicating this is a provisions setup
-    run_db_mng(["-c "] + [config_file] + ["-p"])
+    # # Run database provisions based on the configuration
+    # # Arguments:
+    # #   - "-c": Flag indicating a config file will follow
+    # #   - config_file: Path to the configuration file
+    # #   - "-p": Flag indicating this is a provisions setup
+    # run_db_mng(["-c "] + [config_file] + ["-p"])
+    # run_obfuscator_env(["-i dbstack/.env.gen -o secret.env -p password123"])
+    # run_obfuscator_env(["-i secret.env -o new.env -p password123 -m secret.env.mapping.json -d"])
     
     # Return the loaded configuration for use by other parts of the application
     return config
@@ -86,8 +88,8 @@ def serve():
     from fastapi.middleware.cors import CORSMiddleware
     from dotenv import load_dotenv
 
-    from app.rest.v1.routers import api_v1_router
-    from app.core.config import settings  # Contains environment-specific settings
+    from rest.v1.routers import api_v1_router
+    from core.config import settings  # Contains environment-specific settings
 
     load_dotenv("dbstack/.env")
 

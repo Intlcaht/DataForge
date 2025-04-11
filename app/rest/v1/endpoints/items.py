@@ -1,4 +1,4 @@
-from app.models.item import Item, ItemCreate
+from models.item import Item, ItemCreate
 from fastapi import APIRouter, HTTPException
 from typing import List
 

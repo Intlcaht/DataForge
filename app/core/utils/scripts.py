@@ -1,95 +1,174 @@
+
 def rn_scrpt(file, args): 
     """
-    Run a shell script with the given filename and arguments.
+    Run a shell script located in the current working directory with the given arguments.
     
     Parameters:
-        file (str): The name of the shell script file to run.
-        args (list): A list of arguments to pass to the script.
-    
+    ----------
+    file : str
+        The name of the shell script file to run. This can be relative or absolute.
+    args : list
+        A list of command-line arguments to pass to the script.
+
     Returns:
-        int: The return code from the executed script, typically 0 if successful.
+    -------
+    int
+        The return code from the executed script. A return code of 0 generally indicates success.
+
+    Example usage:
+    -------------
+    # Assuming you have a script named 'deploy.sh' in the current directory
+    rn_scrpt("deploy.sh", ["--env", "production", "--force"])
+
+    # This will execute the equivalent of:
+    #   ./deploy.sh --env production --force
+    # With debug output enabled
     """
 
-    import os  
+    import os
 
     # Get the current working directory where this script is being run.
-    # This is used as the base path to locate shell scripts.
+    # This directory will be used as the base path to locate the shell script.
     current_directory = os.getcwd()
-    # Join the current directory path with the provided file name
-    # to get the full path to the script file.
+
+    # Combine the current directory with the provided script filename
+    # to construct the absolute path to the script.
     script_path = os.path.join(current_directory, file)
 
-    # Importing logging for debugging and monitoring execution
+    # Import Python's logging module for setting verbosity levels
     import logging
 
-    # Import utility functions from a sibling shell module:
-    # - execute_command: actually runs the command in a subprocess
-    # - prepare_command_for_shell: prepares the command string with shell formatting
-    # - set_verbosity: sets how much output you see (debug/info/warning/etc.)
-    from .shell import execute_command, prepare_command_for_shell, set_verbosity 
+    # Import shell utilities from sibling module:
+    # - execute_command: runs the command and returns a result object with returncode
+    # - prepare_command_for_shell: constructs a valid shell command string from input
+    # - set_verbosity: enables logging at different levels (e.g., DEBUG, INFO)
+    from .shell import execute_command, prepare_command_for_shell, set_verbosity
 
-    # Set the logging level to DEBUG so that all debug messages are shown
-    # This is helpful during development or troubleshooting
+    # Enable DEBUG-level verbosity to get detailed logs of each step.
+    # This is particularly useful during testing, CI/CD, or troubleshooting.
     set_verbosity(logging.DEBUG)
 
-    # Prepare the command to be executed in the shell
-    # The shell type is set to 'auto' so it auto-detects whether to use bash, sh, etc.
-    # The 'verbose=True' flag ensures extra logging/info will be printed
+    # Prepare the full shell command using the helper function.
+    # Arguments:
+    # - script_path: Absolute path to the script to be executed
+    # - cmd: None means the script itself is the command
+    # - args: Additional arguments to be passed to the script
+    # - shell_type: 'auto' allows the system to choose the most appropriate shell (bash, sh, etc.)
+    # - verbose: Enables more descriptive output of what's being run
     command = prepare_command_for_shell(
-        script_path=script_path,  # Full path to the script
-        cmd=None,                 # No custom command; we'll run the script directly
-        args=args,                # Arguments to pass to the script
-        shell_type='auto',        # Automatically determine which shell to use
-        verbose=True              # Enable verbose output for debugging
-    )  
+        script_path=script_path,
+        cmd=None,
+        args=args,
+        shell_type='auto',
+        verbose=True
+    )
 
-    # Execute the command in a subprocess
-    # 'shell=True' allows shell features like piping and redirection
-    # 'verbose=True' means output from the command will be shown in the terminal/log
-    result = execute_command(command, shell=True, verbose=True)    
+    # Execute the prepared shell command using the subprocess wrapper.
+    # shell=True allows support for advanced shell features like piping (|), redirection (>), etc.
+    # verbose=True prints the command and its output to the console/log.
+    result = execute_command(command, shell=True, verbose=True)
 
-    # Return the return code from the command
-    # Useful to determine if the script ran successfully (0) or failed (non-zero)
+    # Return the exit code from the command execution.
+    # A value of 0 means success; any non-zero value indicates failure.
+    return result.returncode
+
+def rn_pyscrpt(args): 
+    """
+    rn_pyscrpt: Execute a dynamically cleaned Python command string in a subprocess.
+
+    This function receives a raw command string (usually generated by a script executor),
+    cleans it up into a valid shell command, and executes it using a subprocess.
+
+    It handles:
+    - Nested list flattening
+    - Safe parsing of Python-style argument strings
+    - Logging and verbosity control
+
+    Example usage:
+    --------------
+    Given a raw input command like:
+        args = "'scripts/obfuscator_env.py ', ['-i dbstack/.env.gen -o secret.env -p secret']"
+
+    Call:
+        rn_pyscrpt(args)
+
+    This internally constructs:
+        python scripts/obfuscator_env.py -i dbstack/.env.gen -o secret.env -p secret
+
+    Then executes the command and returns the subprocess's return code.
+
+    Typical input strings:
+    - "Executing command: python ['script.py', ['--flag1', 'value1'], ['--flag2', 'value2']]"
+    - "Executing command: echo ['Hello, World!']"
+    - "Executing command: python ['script.py', ['--option', 'value with spaces']]"
+    """
+    import logging
+    from .shell import execute_command, set_verbosity 
+    from .utils import flatten_list
+    set_verbosity(logging.DEBUG)
+
+    import re
+    import ast
+
+    def clean_command(command_str):
+        """
+        Extract and sanitize a command from a raw Python-evaluated string.
+
+        Example:
+            "python ['script.py', ['--option', 'value']]" 
+            -> "python script.py --option value"
+
+        Handles:
+        - Matching command and arguments using regex
+        - Evaluating Python list-like syntax using ast.literal_eval
+        - Flattening any nested argument lists
+        """
+        match = re.match(r"(\w+)\s*(.*)", command_str)
+        if match:
+            command = match.group(1)
+            args_str = match.group(2).strip()
+
+            try:
+                # Wrap args_str in brackets to evaluate as a list
+                args_list = ast.literal_eval(f"[{args_str}]")
+                if isinstance(args_list, list):
+                    args_list = flatten_list(args_list)
+            except (SyntaxError, ValueError):
+                # If the arguments can't be parsed, default to empty list
+                args_list = []
+
+            # Construct command string by joining the command and arguments
+            cleaned_command = f"{command} {' '.join(map(str, args_list))}"
+            return cleaned_command.strip()
+
+        # If no match was found, return stripped original string
+        return command_str.strip()
+
+    # Construct and execute cleaned command
+    # Use shell=True to allow full shell features (e.g., redirection, pipes)
+    # verbose=True to display the output in logs
+    result = execute_command(clean_command(f"python {args}"), shell=True, verbose=True)    
+
+    # Return the subprocess's return code (0 = success)
     return result.returncode
 
 def run_env_gen(args):
-    """
-    Shortcut function to run the env gen script.
-
-    Parameters:
-        args (list): Arguments to pass to the env gen script.
-
-    Returns:
-        int: The return code of the script execution.
-    """
-
-    # Call the generic run_script() with the specific env gen script path
     return rn_scrpt('scripts/env_yaml_gen.sh', args)
     
 def run_db_mng(args):
-    """
-    Shortcut function to run the database management shell script.
-
-    Parameters:
-        args (list): Arguments to pass to the db management script.
-
-    Returns:
-        int: The return code of the script execution.
-    """
-
-    # Call the generic run_script() with the specific db management script path
     return rn_scrpt('scripts/dbmng.sh', args)
 
 def run_db_ctl(args):
-    """
-    Shortcut function to run the database control shell script.
-
-    Parameters:
-        args (list): Arguments to pass to the db control script.
-
-    Returns:
-        int: The return code of the script execution.
-    """
-
-    # Call the generic run_script() with the specific db control script path
     return rn_scrpt('dbctl.sh', args)
+
+def run_obfuscator_env(args):
+    return rn_pyscrpt(['scripts/obfuscator_env.py ', args])
+
+def run_obfuscator_json(args):
+    return rn_pyscrpt(['scripts/obfuscator_json.py ', args])
+
+def run_obfuscator_yml(args):
+    return rn_pyscrpt(['scripts/obfuscator_yml.py ', args])
+
+def run_extract_deps(args):
+    return rn_pyscrpt(['scripts/extract_deps.py ', args])
