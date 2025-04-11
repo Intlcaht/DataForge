@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package migration;
+
+service MigrationService {
+  rpc GetMigrationPlan(DBIdentifier) returns (MigrationPlan);
+  rpc ApplyMigration(MigrationRequest) returns (MigrationResponse);
+}
+
+message DBIdentifier {
+  string engine = 1;
+  string database = 2;
+}
+
+message MigrationPlan {
+  repeated string pending_migrations = 1;
+}
+
+message MigrationRequest {
+  string engine = 1;
+  string database = 2;
+  string migration_name = 3;
+}
+
+message MigrationResponse {
+  bool success = 1;
+  string log = 2;
+}

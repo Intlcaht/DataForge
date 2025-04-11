@@ -1,0 +1,34 @@
++-------------------------+         +--------------------------+
+|     AppService          |         |   AccessControlService   |
++-------------------------+         +--------------------------+
+| + create_app()          |<------->| + assign_role()          |
+| + get_app()             |         | + check_permission()     |
+| + list_apps()           |         | + list_members()         |
++-------------------------+         +--------------------------+
+        |
+        v
++-------------------------+         +--------------------------+
+|   EnvironmentService    |         |      AuditService        |
++-------------------------+         +--------------------------+
+| + create_environment()  |         | + log_action()           |
+| + list_environments()   |         | + get_logs_for_app()     |
++-------------------------+         +--------------------------+
+        |
+        v
++-------------------------+         +--------------------------+
+|  EnvVariableService     |         |   ExportService          |
++-------------------------+         +--------------------------+
+| + set_variable()        |         | + generate_download_link |
+| + get_variable()        |         | + validate_download_link |
+| + delete_variable()     |         | + retrieve_by_link()     |
+| + import_from_text()    |         +--------------------------+
+| + export_to_text()      |
++-------------------------+
+        |
+        v
++-------------------------+
+|   EncryptionService     |
++-------------------------+
+| + encrypt()             |
+| + decrypt()             |
++-------------------------+

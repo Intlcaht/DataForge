@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  python-grpc:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    # container_name: python-grpc
+    volumes:
+      - ./proto.pb:/proto.pb
+    ports:
+      - "50051:50051"
+
+  envoy:
+    image: envoyproxy/envoy:v1.29-latest
+    # container_name: envoy
+    volumes:
+      - ./manager/envoy.yml:/etc/envoy/envoy.yaml:ro
+      - ./proto.pb:/etc/envoy/proto.pb:ro
+    ports:
+      - "8080:8080"

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package config;
+
+service ConfigService {
+  rpc GetConfigSection(ConfigRequest) returns (ConfigResponse);
+}
+
+message ConfigRequest {
+  string path = 1; // e.g., "storage.postgres.databases.app_db"
+}
+
+message ConfigResponse {
+  string json = 1; // Return as a JSON string to keep it flexible
+}

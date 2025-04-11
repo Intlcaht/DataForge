@@ -1,0 +1,274 @@
+metadata:
+  environment: "development"
+  version_control_enabled: true
+  migration_plan_enabled: true
+  tags: ["secure", "central-config"]
+storage:
+  postgres:
+    locations:
+      local:
+        admin: "${POSTGRES_ADMIN}"
+        admin_password: "${POSTGRES_ADMIN_PASSWORD}"
+        host: "localhost"
+        port: 5432
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1
+      us-east:
+        admin: "${POSTGRES_ADMIN}"
+        admin_password: "${POSTGRES_ADMIN_PASSWORD}"
+        host: "us-east-postgres.example.com"
+        port: 5432
+        scaling:
+          auto_scaling: true
+          min_instances: 2
+          max_instances: 10
+      eu-west:
+        admin: "${POSTGRES_ADMIN}"
+        admin_password: "${POSTGRES_ADMIN_PASSWORD}"
+        host: "eu-west-postgres.example.com"
+        port: 5432
+        scaling:
+          auto_scaling: true
+          min_instances: 1
+          max_instances: 5    
+    databases:
+      users_db:
+        location: "local" 
+        users:
+          - username: "admin"
+            password: "${ADMIN_PASSWORD}"
+            permissions: ["INSERT", "UPDATE", "DELETE", "SELECT"]
+          - username: "api"
+            password: "${API_PASSWORD}"
+            permissions: ["INSERT", "UPDATE", "SELECT"]
+          - username: "client"
+            password: "${CLIENT_PASSWORD}"
+            permissions: ["SELECT"]
+      app_db:
+        location: "us-east"
+        users:
+          - username: "admin"
+            password: "${ADMIN_PASSWORD}"
+            permissions: ["INSERT", "UPDATE", "DELETE", "SELECT"]
+          - username: "app_writer"
+            password: "${APP_WRITER_PASSWORD}"
+            permissions: ["INSERT", "UPDATE", "DELETE"]
+          - username: "app_reader"
+            password: "${APP_READER_PASSWORD}"
+            permissions: ["SELECT"]
+      reporting_db:
+        location: "eu-west"
+        users:
+          - username: "report_viewer"
+            password: "${REPORT_VIEWER_PASSWORD}"
+            permissions: ["SELECT"]
+    controls:
+      - name: "connection_pooling"
+        description: "Ensure connection pooling is enabled using PgBouncer to manage database connections efficiently."
+      - name: "audit_logging"
+        description: "Enable audit logging for all databases to track access and modifications."
+      - name: "migration_files"
+        location: "/path/to/postgres/migrations"
+        description: "Specify the location of migration files to maintain a clear state of database schema changes."
+  mariadb:
+    locations:
+      local:
+        admin: "${MARIADB_ADMIN}"
+        admin_password: "${MARIADB_ADMIN_PASSWORD}"
+        host: "localhost"
+        port: 3306
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1
+      us-west:
+        admin: "${MARIADB_ADMIN}"
+        admin_password: "${MARIADB_ADMIN_PASSWORD}"
+        host: "us-west-mariadb.example.com"
+        port: 3306
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 3
+    databases:
+      wordpress:
+        location: "us-west"
+        users:
+          - username: "wp_admin"
+            password: "${WP_ADMIN_PASSWORD}"
+            permissions: ["ALL PRIVILEGES"]
+      analytics:
+        location: "local"
+        users:
+          - username: "analytics_reader"
+            password: "${ANALYTICS_READER_PASSWORD}"
+            permissions: ["SELECT"]
+    controls:
+      - name: "backup_automation"
+        description: "Ensure automated backups are configured to prevent data loss."
+      - name: "ip_whitelisting"
+        description: "Restrict access to specific IP addresses to enhance security."
+      - name: "migration_files"
+        location: "/path/to/mariadb/migrations"
+        description: "Specify the location of migration files to maintain a clear state of database schema changes."
+  mongodb:
+    locations:
+      local:
+        admin: "${MONGODB_ADMIN}"
+        admin_password: "${MONGODB_ADMIN_PASSWORD}"
+        host: "localhost"
+        port: 27017
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1
+      ap-south:
+        admin: "${MONGODB_ADMIN}"
+        admin_password: "${MONGODB_ADMIN_PASSWORD}"
+        host: "ap-south-mongodb.example.com"
+        port: 27017
+        scaling:
+          auto_scaling: true
+          min_instances: 3
+          max_instances: 8
+    databases:
+      pbfr:
+        location: "ap-south"
+        users:
+          - username: "app_user"
+            password: "${MONGO_APP_USER_PASSWORD}"
+            roles:
+              - role: "readWrite"
+                db: "app_data"
+          - username: "app_monitor"
+            password: "${MONGO_APP_MONITOR_PASSWORD}"
+            roles:
+              - role: "clusterMonitor"
+                db: "admin"
+      logs:
+        location: "local"
+        users:
+          - username: "log_reader"
+            password: "${MONGO_LOG_READER_PASSWORD}"
+            roles:
+              - role: "read"
+                db: "logs"
+    controls:
+      - name: "replication_setup"
+        description: "Set up replication for high availability and data redundancy."
+      - name: "migration_files"
+        location: "/path/to/mongodb/migrations"
+        description: "Specify the location of migration files to maintain a clear state of database schema changes."
+  neo4j:
+    locations:
+      admin: "${NEO4J_ADMIN}"
+      admin_password: "${NEO4J_ADMIN_PASSWORD}"
+      local:
+        host: "localhost"
+        port: 7687
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1
+    
+    databases:
+      pipeline_db:
+        location: "local"
+        users:
+          - username: "graph_editor"
+            password: "${GRAPH_EDITOR_PASSWORD}"
+            roles: ["editor"]
+          - username: "graph_reader"
+            password: "${GRAPH_READER_PASSWORD}"
+            roles: ["reader"]
+  redis:
+    locations:
+      local:
+        admin_password: "${REDIS_ADMIN_PASSWORD}"
+        host: "localhost"
+        port: 6379
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1
+    databases:
+      cache:
+        location: "local"
+        users:
+          - password: "${REDIS_CACHE_PASSWORD}"
+            acl: "on >cache *~* +@write"
+      session:
+        location: "local" 
+        users:
+          - password: "${REDIS_SESSION_PASSWORD}"
+            acl: "on >session *~* +@read"
+    controls:
+      - name: "monitoring_integration"
+        description: "Integrate with monitoring tools like Prometheus to track performance."
+  influxdb:
+    locations:
+      local:
+        admin_token: "${INFLUXDB_ADMIN_TOKEN}"
+        host: "localhost"
+        port: 8086
+        scaling:
+          auto_scaling: false
+          min_instances: 1
+          max_instances: 1    
+    databases:
+      metrics:
+        location: "local"
+        bucket: "app_metrics"
+        org: "dev_org"
+        users:
+          - username: "metrics_writer"
+            token: "${METRICS_WRITER_TOKEN}"
+            permissions: ["write"]
+      monitoring:
+        location: "local"
+        bucket: "sys_monitoring"
+        org: "dev_org"
+        users:
+          - username: "monitoring_reader"
+            token: "${MONITORING_READER_TOKEN}"
+            permissions: ["read"]
+    controls:
+      - name: "token_rotation"
+        description: "Regularly review and rotate tokens to minimize the risk of unauthorized access."
+controls:
+  audit_logging:
+    enabled: true
+    destinations: ["S3"]
+  access_controls:
+    enabled: true
+    ip_whitelist: ["192.168.1.0/24", "10.0.0.0/16"]
+    least_privilege: true
+  monitoring:
+    enabled: true
+    integrations: ["Prometheus"]
+  migration_management:
+    enabled: true
+    auto_diff: true
+    require_review: true
+  compliance:
+    enabled: true
+    gdpr: true
+    soc2: true
+    pci_dss: false
+  backups:
+    enabled: true
+    retention_days: 30
+    test_restore: true
+environments:
+  development:
+    backup_schedule: "weekly"
+    controls:
+      audit_logging:
+  production:
+    backup_schedule: "daily"
+    controls:
+      audit_logging:
+      access_controls:
+        ip_whitelist: ["10.0.0.0/16"]

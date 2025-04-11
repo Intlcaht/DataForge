@@ -1,0 +1,33 @@
+Key Features:
+Loads configuration from a YAML file using `yq`.
+Supports provisioning of users and databases for multiple database systems.
+Provides clear, backup, restore, and delete operations for each database type.
+Checks for required dependencies before executing commands.
+Uses command-line flags for ease of use.
+Includes a help message for usage instructions.
+
+Basic Operations:
+Provision Databases (from config.yml):
+ Clear Data:
+ Backup Database:
+ Restore Database:b backups/main_db_restore.sql
+ Delete Database:
+
+Extended Operations:
+ Use Custom Config File:
+ Validate Config File:
+ Detect Schema Drift:
+ Rotate Secrets:
+ Mask Production Data:
+ Simulate Disaster Recovery:
+ Generate Schema Documentation:
+ Tag Environment:
+ Trigger Monitoring Alert Test:
+ Sandbox Database for Testing:
+ Enable/Disable RBAC:
+ Apply Retention Policy:
+ Check Cost Estimates:
+ Test Auth Policy:
+ Lint All Configs (CI/CD safe):
+ Plan Schema Changes (Dry Run):
+ Apply Approved Schema Changes:

@@ -1,0 +1,35 @@
+## 🌐 API Route to Service Mapping
+
+| HTTP Method | Path                                      | Description                                 | Service Used                  |
+|-------------|-------------------------------------------|---------------------------------------------|-------------------------------|
+| `GET`       | `/apps/`                                  | List all user apps                          | `AppService`              |
+| `POST`      | `/apps/`                                  | Create a new app                            | `AppService`              |
+| `GET`       | `/apps/{app_id}`                          | Get project details                         | `AppService`              |
+| `DELETE`    | `/apps/{app_id}`                          | Delete a app                                | `AppService`              |
+| `POST`      | `/apps/{app_id}/envs/`                    | Create a new environment                    | `EnvironmentService`          |
+| `GET`       | `/apps/{app_id}/envs/`                    | List all environments                       | `EnvironmentService`          |
+| `GET`       | `/envs/{env_id}`                          | Get environment details                     | `EnvironmentService`          |
+| `DELETE`    | `/envs/{env_id}`                          | Delete environment                          | `EnvironmentService`          |
+| `POST`      | `/envs/{env_id}/variables/`               | Set or update a variable                    | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/variables/`               | List variables (optionally masked)          | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/variables/{key}`          | Get a single variable                       | `EnvVariableService`          |
+| `DELETE`    | `/envs/{env_id}/variables/{key}`          | Delete a variable                           | `EnvVariableService`          |
+| `POST`      | `/envs/{env_id}/import/`                  | Import `.env` text                          | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/export/`                  | Export `.env` text                          | `EnvVariableService`          |
+| `POST`      | `/envs/{env_id}/share/`                   | Generate one-time download link             | `ExportService`               |
+| `GET`       | `/download/{link_id}`                     | Use download link to get `.env` file        | `ExportService`               |
+| `POST`      | `/apps/{app_id}/members/`                 | Invite user / assign role                   | `AccessControlService`        |
+| `GET`       | `/apps/{app_id}/members/`                 | List members and roles                      | `AccessControlService`        |
+| `GET`       | `/apps/{app_id}/logs/`                    | View app audit log                          | `AuditService`                |
+
+---
+
+## ⚙️ Optional API Extensions (for advanced use cases)
+
+| HTTP Method | Path                                         | Description                                 | Service Used           |
+|-------------|----------------------------------------------|---------------------------------------------|------------------------|
+| `POST`      | `/webhooks/`                                 | Register webhook on env changes             | `SyncService`          |
+| `POST`      | `/envs/{env_id}/sync/{target}`               | Sync to external target                     | `SyncService`          |
+| `GET`       | `/validate-key/{key}`                        | Validate key format                         | `ValidationService`    |
+
+---

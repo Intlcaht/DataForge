@@ -1,0 +1,81 @@
+# Configuration Management Routes
+
+## 🌐 Core Database Management Routes
+
+| HTTP Method | Path                                | Description                                       | Example Response |
+|-------------|-------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/databases`                    | List all databases across all engines             | Array of database objects |
+| `GET`       | `/mng/databases/{engine}`           | List all databases for specific engine            | Array of database objects for PostgreSQL, MariaDB, etc. |
+| `GET`       | `/mng/databases/{engine}/{db_name}` | Get specific database details                     | Complete database configuration |
+| `PUT`       | `/mng/databases/{engine}/{db_name}` | Update database configuration                     | Updated database object |
+| `DELETE`    | `/mng/databases/{engine}/{db_name}` | Delete a database (with safeguards)               | Success message |
+
+## 🔑 User Management Routes
+
+| HTTP Method | Path                                                   | Description                                | Example Response |
+|-------------|---------------------------------------------------------|--------------------------------------------|-----------------------|
+| `GET`       | `/mng/databases/{engine}/{db_name}/users`              | List all users for specific database        | Array of user objects |
+| `POST`      | `/mng/databases/{engine}/{db_name}/users`              | Create new database user                    | Created user object |
+| `GET`       | `/mng/databases/{engine}/{db_name}/users/{username}`   | Get details of specific database user       | User object with permissions |
+| `PUT`       | `/mng/databases/{engine}/{db_name}/users/{username}`   | Update database user permissions/password   | Updated user object |
+| `DELETE`    | `/mng/databases/{engine}/{db_name}/users/{username}`   | Remove database user                        | Success message |
+
+## 🌍 Location Management Routes
+
+| HTTP Method | Path                                           | Description                                       | Example Response |
+|-------------|------------------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/locations`                               | List all available database locations             | Array of location objects |
+| `GET`       | `/mng/locations/{engine}`                      | List locations for specific database engine       | Array of location objects |
+| `GET`       | `/mng/locations/{engine}/{location_id}`        | Get details about specific location               | Location object with scaling info |
+| `PUT`       | `/mng/locations/{engine}/{location_id}/scaling`| Update scaling configuration for a location       | Updated location object |
+
+## ⚙️ Controls & Configuration Routes
+
+| HTTP Method | Path                                  | Description                                       | Example Response |
+|-------------|---------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/controls`                       | List all global controls                          | Controls configuration object |
+| `PUT`       | `/mng/controls`                       | Update global controls configuration              | Updated controls object |
+| `GET`       | `/mng/controls/{engine}`              | Get engine-specific controls                      | Engine controls object |
+| `GET`       | `/mng/environment`                    | Get current environment configuration             | Environment configuration |
+| `PUT`       | `/mng/environment`                    | Update environment settings                       | Updated environment object |
+
+## 🔍 Monitoring & Status Routes
+
+| HTTP Method | Path                                          | Description                                    | Example Response |
+|-------------|-----------------------------------------------|-------------------------------------------------|-----------------|
+| `GET`       | `/mng/status`                                 | Get overall status of database infrastructure   | Status summary object |
+| `GET`       | `/mng/status/{engine}`                        | Get status of specific database engine          | Engine status object |
+| `GET`       | `/mng/status/{engine}/{location_id}`          | Get status of specific location                 | Location status details |
+| `GET`       | `/mng/status/{engine}/{db_name}`              | Get status of specific database                 | Database status details |
+
+## 📝 Migration Management Routes
+
+| HTTP Method | Path                                               | Description                                       | Example Response |
+|-------------|---------------------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/migrations`                                  | List all pending and applied migrations           | Migrations object |
+| `GET`       | `/mng/migrations/{engine}`                         | List migrations for specific engine               | Engine migrations |
+| `GET`       | `/mng/migrations/{engine}/{db_name}`               | List migrations for specific database             | Database migrations |
+| `POST`      | `/mng/migrations/{engine}/{db_name}/plan`          | Create migration plan for database                | Migration plan object |
+| `POST`      | `/mng/migrations/{engine}/{db_name}/apply`         | Apply pending migrations                          | Migration result |
+| `POST`      | `/mng/migrations/{engine}/{db_name}/rollback`      | Rollback last migration                           | Rollback result |
+
+## 🔒 Security & Compliance Routes
+
+| HTTP Method | Path                                     | Description                                       | Example Response |
+|-------------|------------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/security/audit-logs`               | Retrieve audit logs                               | Audit logs object |
+| `GET`       | `/mng/security/compliance`               | Get compliance status                             | Compliance status object |
+| `PUT`       | `/mng/security/access-controls`          | Update access control configuration               | Updated access controls |
+| `GET`       | `/mng/security/access-controls/ip-list`  | Get IP whitelist configuration                    | IP whitelist object |
+| `PUT`       | `/mng/security/access-controls/ip-list`  | Update IP whitelist                               | Updated IP whitelist |
+
+## 💾 Backup Management Routes
+
+| HTTP Method | Path                                               | Description                                       | Example Response |
+|-------------|---------------------------------------------------|---------------------------------------------------|-----------------|
+| `GET`       | `/mng/backups`                                     | List all database backups                         | Array of backup objects |
+| `GET`       | `/mng/backups/{engine}`                            | List backups for specific engine                  | Engine backup objects |
+| `GET`       | `/mng/backups/{engine}/{db_name}`                  | List backups for specific database                | Database backup objects |
+| `POST`      | `/mng/backups/{engine}/{db_name}`                  | Trigger manual backup                             | Backup job object |
+| `GET`       | `/mng/backups/{engine}/{db_name}/{backup_id}`      | Get backup details                                | Backup details |
+| `POST`      | `/mng/backups/{engine}/{db_name}/{backup_id}/restore` | Restore from backup                           | Restore job object |

@@ -1,0 +1,82 @@
+static_resources:
+  # Define listeners (network endpoints) that Envoy will listen on
+  listeners:
+    # First listener configuration
+    - name: listener_0
+      # Network address configuration for this listener
+      address:
+        socket_address: 
+          # Listen on all available network interfaces
+          address: 0.0.0.0
+          # Listen on port 8080
+          port_value: 8080
+      
+      # Chain of filters to process incoming traffic
+      filter_chains:
+        - filters:
+            # HTTP connection manager filter for handling HTTP/1.1 and HTTP/2 traffic
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                # Prefix for statistics emitted by this connection manager
+                stat_prefix: ingress_http
+                # Automatically detect HTTP/1.1 or HTTP/2
+                codec_type: AUTO
+                
+                # Route configuration for incoming requests
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend
+                      # Match all domains
+                      domains: ["*"]
+                      routes:
+                        # Match all paths (prefix /)
+                        - match: { prefix: "/" }
+                          # Route to this cluster
+                          route: { cluster: python_grpc_backend }
+                
+                # HTTP-level filters
+                http_filters:
+                  # gRPC-JSON transcoder filter for REST<->gRPC translation
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
+                      # Path to Protocol Buffer descriptor file
+                      proto_descriptor: "/etc/envoy/proto.pb"
+                      # List of gRPC services to transcode
+                      services: ["dbcontrol.DBControl"]
+                      # JSON output formatting options
+                      print_options:
+                        # Add whitespace for human-readable JSON
+                        add_whitespace: true
+                        # Always include primitive fields (even when empty/default)
+                        always_print_primitive_fields: true
+                        # Keep original proto field names in JSON
+                        preserve_proto_field_names: true
+                  
+                  # Router filter that handles request routing to upstream clusters
+                  - name: envoy.filters.http.router
+  
+  # Define upstream clusters that Envoy can route to
+  clusters:
+    - name: python_grpc_backend
+      # Use DNS for service discovery (with logical DNS - caching DNS lookups)
+      type: LOGICAL_DNS
+      # Timeout for establishing TCP connections
+      connect_timeout: 1s
+      # Enable HTTP/2 protocol (required for gRPC)
+      http2_protocol_options: {}
+      
+      # Endpoint configuration
+      load_assignment:
+        cluster_name: python_grpc_backend
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      # Service name (resolved via DNS)
+                      address: python-grpc
+                      # gRPC server port
+                      port_value: 50051

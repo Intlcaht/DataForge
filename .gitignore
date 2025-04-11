@@ -1,0 +1,32 @@
+# Global
+.env
+*.env
+*.pyc
+__pycache__/
+venv/
+pnpm-lock.yaml
+dbstack/
+
+# React frontend (manager/)
+manager/node_modules/
+manager/build/
+manager/dist/
+manager/.next/
+manager/.turbo/
+manager/.env*
+
+# Python backend (app/)
+app/__pycache__/
+app/*.pyc
+app/*.pyo
+app/*.pyd
+app/.pytest_cache/
+app/.mypy_cache/
+app/.env*
+app/instance/
+app/.coverage
+app/htmlcov/
+
+# OS specific
+.DS_Store
+Thumbs.db

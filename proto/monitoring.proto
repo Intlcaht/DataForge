@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package monitoring;
+
+service MonitoringService {
+  rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
+}
+
+message MetricsRequest {
+  string database = 1;
+  string engine = 2;
+}
+
+message MetricsResponse {
+  float cpu_usage = 1;
+  float memory_usage = 2;
+  int32 active_connections = 3;
+}

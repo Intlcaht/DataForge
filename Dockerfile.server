@@ -1,0 +1,26 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Copy files
+COPY app/ ./
+COPY proto/db_control.proto ./
+
+# Install dependencies
+RUN pip install grpcio grpcio-tools
+
+# Generate Python code from proto
+RUN python -m grpc_tools.protoc \
+    -I. \
+    --python_out=. \
+    --grpc_python_out=. \
+    db_control.proto
+
+# Generate descriptor file
+RUN python -m grpc_tools.protoc \
+    -I. \
+    --descriptor_set_out=../proto.pb \
+    --include_imports \
+    db_control.proto
+
+CMD ["python", "server.py"]

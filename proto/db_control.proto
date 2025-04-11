@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package dbcontrol;
+
+service DBControlService {
+  rpc GetStatus(DBIdentifier) returns (DBStatus);
+  rpc ScaleInstance(ScaleRequest) returns (ScaleResponse);
+}
+
+message DBIdentifier {
+  string engine = 1; // e.g., "postgres"
+  string location = 2; // e.g., "us-east"
+}
+
+message DBStatus {
+  string state = 1;
+  int32 current_instances = 2;
+}
+
+message ScaleRequest {
+  string engine = 1;
+  string location = 2;
+  int32 target_instances = 3;
+}
+
+message ScaleResponse {
+  bool success = 1;
+  string message = 2;
+}

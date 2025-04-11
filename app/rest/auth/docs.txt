@@ -1,0 +1,22 @@
+# 🔐 Authentik OIDC Integration Routes
+
+## 🌐 API Route to Service Mapping
+
+| HTTP Method | Path                     | Description                                | Service Used          |
+|-------------|--------------------------|--------------------------------------------|-----------------------|
+| `GET`       | `/auth/oidc/login`       | Initiate Authentik OIDC login flow         | `OidcProviderService` |
+| `GET`       | `/auth/oidc/callback`    | Handle OIDC redirect after authentication  | `OidcProviderService` |
+| `GET`       | `/auth/oidc/user`        | Get current authenticated user information | `OidcProviderService` |
+| `POST`      | `/auth/oidc/logout`      | Terminate user session with Authentik      | `OidcProviderService` |
+| `POST`      | `/auth/oidc/token`       | Get a new access token (refresh flow)      | `OidcProviderService` |
+| `GET`       | `/auth/oidc/status`      | Check authentication status                | `OidcProviderService` |
+
+---
+
+## ⚙️ Optional API Extensions (for advanced use cases)
+
+| HTTP Method | Path                                         | Description                                 | Service Used           |
+|-------------|----------------------------------------------|---------------------------------------------|------------------------|
+| `POST`      | `/tokens/`                                   | Generate API token for CLI or CI/CD         | `ValidationService`    |
+
+---
