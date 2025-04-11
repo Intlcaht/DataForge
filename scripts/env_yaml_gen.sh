@@ -3,8 +3,6 @@
 # YAML Environment Variable Extractor
 # ===============================================================
 # Version: 1.0.0
-# Author: Claude
-# Date: April 10, 2025
 # 
 # Description:
 #   This script extracts environment variables referenced in a YAML 
