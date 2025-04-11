@@ -26,7 +26,9 @@ app/.env*
 app/instance/
 app/.coverage
 app/htmlcov/
+app/db.yml
 
 # OS specific
 .DS_Store
 Thumbs.db
+ORG.drawio.png
