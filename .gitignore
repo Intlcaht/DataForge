@@ -1,6 +1,6 @@
 # Global
 .env
-*.env
+.env.*
 *.pyc
 __pycache__/
 venv/
