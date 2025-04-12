@@ -19,7 +19,6 @@ class DeobfuscateRequest(BaseModel):
     password: str = Field(..., description="Secret password used during obfuscation")
     output_filename: Optional[str] = Field(None, description="Custom output filename (optional)")
 
-
 router = APIRouter()
 
 @router.post("/api/env/upload", response_model=FileUploadResponse)
@@ -99,10 +98,10 @@ async def obfuscate_env_file(
 
 @router.post("/api/env/deobfuscate", response_model=TaskResponse)
 async def deobfuscate_env_file(
+    background_tasks: BackgroundTasks,
     obfuscated_file_id: str = Query(..., description="ID of the uploaded obfuscated file"),
     mapping_file_id: str = Query(..., description="ID of the uploaded mapping file"),
-    request: DeobfuscateRequest = Body(...),
-    background_tasks: BackgroundTasks = Depends()
+    request: DeobfuscateRequest = Body(...),    
 ):
     """Deobfuscate an uploaded environment file using its mapping file"""
     if obfuscated_file_id not in temp_files:

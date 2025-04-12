@@ -1,8 +1,8 @@
 from pydantic import  AnyHttpUrl
-from pydantic.settings import BaseSettings # type: ignore
+# from pydantic.settings import BaseSettings # type: ignore
 from typing import List, Optional
 
-class Settings(BaseSettings):
+class Settings():
     PROJECT_NAME: str = "ICaht BK Api"
     PROJECT_DESCRIPTION: str = ""
     VERSION: str = "0.1.0"

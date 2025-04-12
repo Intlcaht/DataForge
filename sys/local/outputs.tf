@@ -35,13 +35,3 @@ output "redis_connection" {
   description = "Redis connection information"
   value       = "Redis is available at localhost:${var.redis_port} with the configured password"
 }
-
-output "all_services_status" {
-  description = "Status of all database services"
-  value       = "Run './db_mng_trfm.sh -a t' to check the status of all services"
-}
-
-output "backup_instructions" {
-  description = "Instructions for backing up databases"
-  value       = "Run './db_mng_trfm.sh -a b' to backup all databases, or './db_mng_trfm.sh -<service_initial> b' for a specific service"
-}

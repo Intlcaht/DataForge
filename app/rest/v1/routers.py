@@ -1,4 +1,4 @@
-from rest.v1.endpoints import health, items, db_management, obfuscator, utils
+from rest.v1.endpoints import items, db_management, obfuscator, utils
 from fastapi import APIRouter
 
 api_v1_router = APIRouter()

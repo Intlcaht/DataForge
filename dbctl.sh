@@ -302,8 +302,8 @@ services:
       DOCKER_INFLUXDB_INIT_USERNAME_FILE: /run/secrets/influxdb2-admin-username
       DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
-      DOCKER_INFLUXDB_INIT_ORG: myorg
-      DOCKER_INFLUXDB_INIT_BUCKET: mainbucket
+      DOCKER_INFLUXDB_INIT_ORG: itlc
+      DOCKER_INFLUXDB_INIT_BUCKET: b0
     volumes:
       - influxdb2-data:/var/lib/influxdb2
       - ./config/influxdb:/etc/influxdb2
@@ -468,8 +468,8 @@ backup_database() {
       ;;
     influxdb)
       local token="${INFLUXDB_TOKEN}"
-      local org="myorg"
-      local bucket="mainbucket"
+      local org="itlc"
+      local bucket="b0"
       
       # Create a backup using the influx CLI
       echo "Creating InfluxDB backup..."

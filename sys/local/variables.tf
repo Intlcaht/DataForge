@@ -39,8 +39,6 @@ variable "mongodb_port" {
 variable "influxdb_port" {
   description = "Port for InfluxDB"
   type        = number
-  description = "Port for InfluxDB"
-  type        = number
   default     = 8086
 }
 

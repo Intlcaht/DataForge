@@ -1,11 +1,7 @@
 
 import os
-import tempfile
-from typing import List
-import uuid
-from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, logger
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
 from rest.v1.helpers import task_results, temp_files
 router = APIRouter()
 

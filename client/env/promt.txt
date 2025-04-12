@@ -1,0 +1,19 @@
+provide a derived api that uses these under the hood that will query endpoints listed below:
+<>
+| `GET`       | `/envs/{env_id}`                          | Get environment details                     | `EnvironmentService`          |
+| `DELETE`    | `/envs/{env_id}`                          | Delete environment                          | `EnvironmentService`          |
+| `POST`      | `/envs/{env_id}/variables/`               | Set or update a variable                    | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/variables/`               | List variables (optionally masked)          | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/variables/{key}`          | Get a single variable                       | `EnvVariableService`          |
+| `DELETE`    | `/envs/{env_id}/variables/{key}`          | Delete a variable                           | `EnvVariableService`          |
+| `POST`      | `/envs/{env_id}/import/`                  | Import `.env` text                          | `EnvVariableService`          |
+| `GET`       | `/envs/{env_id}/export/`                  | Export `.env` text                          | `EnvVariableService`          |
+| `POST`      | `/envs/{env_id}/share/`                   | Generate one-time download link  
+</>
+The client should accept an api key and other connection options like api key header names
+In addition, the derived api should have methods to:
+
+upload an obfuscated .env file with an env_id and expect a downlink link as result
+download the file from the link
+
+Add verbose comments, and example usage examples

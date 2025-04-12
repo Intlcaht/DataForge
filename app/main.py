@@ -68,10 +68,6 @@ def init():
     # Load the configuration from the YAML file into a dictionary
     # This will be used throughout the application for various settings
     config = load_config(config_file=config_file)
-    
-    # run_obfuscator_env(["-i dbstack/.env.gen -o secret.env -p password123"])
-    # run_obfuscator_env(["-i secret.env -o new.env -p password123 -m secret.env.mapping.json -d"])
-    
     # Return the loaded configuration for use by other parts of the application
 
     # Examples of using the controller
@@ -81,50 +77,10 @@ def init():
     # result4 = local_db_controller.backup_all_databases()
     
     print("Results:", result1, result2, result3)
-
     # Provision databases using the default config
     success = db_mng_control.provision_databases(config_file=config_file)
     print(f"Provision result: {success}")
-    
-    # # Backup a database
-    # backup_result = db_mng_control.backup_database("postgres.main_db", "backups/main_backup.sql")
-    # print(f"Backup result: {backup_result}")
-    
-    # # Generate documentation
-    # docs_result = db_mng_control.generate_schema_documentation(
-    #     "postgres.main_db", 
-    #     "docs/schema.md"
-    # )
-    # print(f"Documentation result: {docs_result}")
-
-    # Example: Obfuscate a .env file
-    # env_file = ".env"
-    # password = "secret"
-    
-    # # Check if files exist before attempting operations
-    # if env_obfuscator.validate_files(env_file):
-    #     # Get default paths that would be used
-    #     default_output = env_obfuscator.get_default_output_path(env_file)
-    #     default_mapping = env_obfuscator.get_default_mapping_path(default_output)
-        
-    #     print(f"Default output would be: {default_output}")
-    #     print(f"Default mapping would be: {default_mapping}")
-        
-    #     # Basic obfuscation
-    #     # result1 = env_obfuscator.obfuscate(env_file, password)
-        
-    #     # Obfuscation with custom output path
-    #     # result2 = env_obfuscator.obfuscate(env_file, password, "secret.env")
-        
-    #     # Deobfuscation
-    #     result3 = env_obfuscator.deobfuscate(
-    #         "secret.env", 
-    #         "secret.env.mapping.json", 
-    #         password
-    #     )
-        
-    #     print("Results:", result1, result3)
-    # return config
+   
 
 def serve():
     from fastapi import FastAPI
@@ -175,7 +131,6 @@ def serve():
         port=args.port,
         reload=args.reload
     )
-    # pass
 
 # Entry point: run the `serve` function only if this file is executed directly (not imported)
 if __name__ == '__main__':
