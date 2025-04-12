@@ -1,6 +1,8 @@
 #!/bin/bash
 # dbctl.sh - Database Stack Management Script for Terraform
 
+# Default directory is current directory if not specified
+TF_DIR="$(pwd)"
 ROOT_DIR="$(pwd)/dbstack"
 CONFIG_DIR="$ROOT_DIR/config"
 SECRETS_DIR="$ROOT_DIR/secrets"
@@ -16,6 +18,26 @@ load_env() {
   fi
 }
 
+# Set the Terraform directory
+set_tf_dir() {
+  local dir="$1"
+  
+  if [ -n "$dir" ]; then
+    # Convert to absolute path if relative
+    if [[ "$dir" != /* ]]; then
+      dir="$(pwd)/$dir"
+    fi
+    
+    if [ ! -d "$dir" ]; then
+      echo "❌ Directory does not exist: $dir"
+      exit 1
+    fi
+    
+    TF_DIR="$dir"
+    echo "✅ Using Terraform directory: $TF_DIR"
+  fi
+}
+
 # Initialize or apply Terraform configuration
 init_stack() {
   local root_password="${1:-$DEFAULT_ROOT_PASSWORD}"
@@ -26,15 +48,18 @@ init_stack() {
     echo "⚠️ Warning: Password is less than 8 characters. Consider using a stronger password."
   fi
 
+  # Change to Terraform directory
+  cd "$TF_DIR" || exit 1
+
   # Create main.tf if not exists (terraform configuration)
   if [ ! -f "main.tf" ]; then
     echo "🔄 Creating Terraform configuration file..."
     # You would need the actual content of main.tf here
-    echo "Please ensure main.tf exists in the current directory"
+    echo "Please ensure main.tf exists in the directory: $TF_DIR"
     exit 1
   fi
 
-  echo "🔄 Initializing Terraform..."
+  echo "🔄 Initializing Terraform in $TF_DIR..."
   terraform init
 
   echo "🔄 Applying Terraform configuration with custom root password..."
@@ -236,17 +261,20 @@ execute_operation() {
   local service="$1"
   local cmd="$2"
   
+  # Change to Terraform directory
+  cd "$TF_DIR" || exit 1
+  
   case "$cmd" in
     s)
-      echo "Starting $service using Terraform..."
+      echo "Starting $service using Terraform in $TF_DIR..."
       terraform apply -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -target="docker_container.$service" -auto-approve
       ;;
     k)
-      echo "Stopping $service using Terraform..."
+      echo "Stopping $service using Terraform in $TF_DIR..."
       terraform destroy -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -target="docker_container.$service" -auto-approve
       ;;
     r)
-      echo "Restarting $service..."
+      echo "Restarting $service in $TF_DIR..."
       terraform destroy -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -target="docker_container.$service" -auto-approve
       terraform apply -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -target="docker_container.$service" -auto-approve
       ;;
@@ -279,14 +307,20 @@ execute_operation() {
 
 # Start all services
 start_all() {
-  echo "Starting all database services with Terraform..."
+  # Change to Terraform directory
+  cd "$TF_DIR" || exit 1
+  
+  echo "Starting all database services with Terraform in $TF_DIR..."
   terraform apply -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -auto-approve
   echo "✅ All database services started"
 }
 
 # Stop all services
 stop_all() {
-  echo "Stopping all database services with Terraform..."
+  # Change to Terraform directory
+  cd "$TF_DIR" || exit 1
+  
+  echo "Stopping all database services with Terraform in $TF_DIR..."
   terraform destroy -var="root_password=$(load_env && echo $DB_ROOT_PASSWORD || echo $DEFAULT_ROOT_PASSWORD)" -auto-approve
   echo "✅ All database services stopped"
 }
@@ -321,6 +355,7 @@ usage() {
   echo "Usage: dbctl.sh [options]"
   echo ""
   echo "General Options:"
+  echo "  -d [directory] Specify the Terraform files directory (default: current directory)"
   echo "  -i [password]  Initialize stack with Terraform (optional root password)"
   echo "  -a [cmd]       All services (s=start, k=stop, t=status, b=backup)"
   echo ""
@@ -343,8 +378,9 @@ usage() {
   echo "  t         Show database statistics"
   echo ""
   echo "Examples:"
-  echo "  ./dbctl.sh -i StrongP@ss"
-  echo "  ./dbctl.sh -i"
+  echo "  ./dbctl.sh -d /path/to/terraform/files -i StrongP@ss"
+  echo "  ./dbctl.sh -d terraform_configs -i"
+  echo "  ./dbctl.sh -d . -p s"
   echo "  ./dbctl.sh -p s"
   echo "  ./dbctl.sh -m k"
   echo "  ./dbctl.sh -f c"
@@ -358,8 +394,20 @@ if [ "$#" -eq 0 ]; then
   usage
 fi
 
-while getopts "i:p:m:g:f:n:r:a:" opt; do
+# Process option for directory first
+while getopts ":d:" opt; do
   case $opt in
+    d) set_tf_dir "$OPTARG" ;;
+    *) ;; # Skip other options for now
+  esac
+done
+
+# Reset OPTIND to process all options again
+OPTIND=1
+
+while getopts "d:i:p:m:g:f:n:r:a:" opt; do
+  case $opt in
+    d) ;; # Already processed
     i) init_stack "$OPTARG" ;;
     p) execute_operation "postgres" "$OPTARG" ;;
     m) execute_operation "mariadb" "$OPTARG" ;;

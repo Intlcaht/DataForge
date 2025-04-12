@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 
 /**
  * Type definition for the HeaderSlotContext
@@ -31,19 +31,19 @@ const HeaderSlotContext = createContext<HeaderSlotContextType | undefined>(undef
 export const HeaderSlotProvider = ({ children }: { children: ReactNode }) => {
     // Initialize state to store the current header slot content, initially null (empty)
     const [slot, setSlotState] = useState<ReactNode>(null)
-    
+
     /**
      * Function to update the header slot with new content
      * @param {ReactNode} node - The React node to render in the header slot
      */
     const setSlot = (node: ReactNode) => setSlotState(node)
-    
+
     /**
      * Convenience function to clear/empty the header slot
      * Simply calls setSlotState with null to remove any content
      */
     const clearSlot = () => setSlotState(null)
-    
+
     // Provide the current slot state and manipulation functions to all children
     return (
         <HeaderSlotContext.Provider value={{ slot, setSlot, clearSlot }}>
@@ -67,19 +67,28 @@ export const HeaderSlotProvider = ({ children }: { children: ReactNode }) => {
  * @throws {Error} If used outside of a HeaderSlotProvider
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export const useHeaderSlot = () => {
+export const useHeaderSlot = (Component) => {
     // Get the current context value
     const ctx = useContext(HeaderSlotContext)
-    
+
     // Safety check: ensure the hook is used within a provider
     if (!ctx) throw new Error('useHeaderSlot must be used within HeaderSlotProvider')
-    
+
+    const { setSlot, clearSlot } = ctx
+
+    useEffect(() => {
+        if (Component) {
+            setSlot(<Component />)
+        }
+        return () => clearSlot()
+    }, [setSlot, clearSlot, Component])
+
     // Return the context value to the calling component
     return ctx
 }
 
 function Header() {
-    const { slot } = useHeaderSlot()
+    const { slot } = useHeaderSlot(undefined)
     return (
         <header className="bg-white border-b border-gray-200 flex items-center justify-between px-6 py-4">
             <div className="flex items-center">

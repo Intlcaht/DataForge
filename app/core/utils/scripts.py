@@ -161,6 +161,9 @@ def run_db_mng(args):
 def run_db_ctl(args):
     return rn_scrpt('dbctl.sh', args)
 
+def run_db_ctl_rc(args):
+    return rn_scrpt('sys/local/dbctl.rc.sh -d sys/local', args)
+
 def run_obfuscator_env(args):
     return rn_pyscrpt(['scripts/obfuscator_env.py ', args])
 

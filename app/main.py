@@ -50,7 +50,9 @@ def init():
     Returns:
         dict: The loaded configuration from the YAML file
     """
-    from core.utils.scripts import run_env_gen, run_db_mng, run_db_ctl, run_obfuscator_env
+    from services.storage.local import local_db_controller, DatabaseService, DatabaseCommand
+    from services.env.obfuscator_service import env_obfuscator
+    from controls.db_mng import db_mng_control
     from core.flow.config_loader import load_config
     # Define the path to the database configuration YAML file
     # This file contains database connection parameters and other settings
@@ -67,27 +69,67 @@ def init():
     # This will be used throughout the application for various settings
     config = load_config(config_file=config_file)
     
-    # # Initialize database startup with setup mode ("-a s")
-    # # This sets up connections
-    # run_db_ctl(["-a s"])
-    
-    # # Run database provisions based on the configuration
-    # # Arguments:
-    # #   - "-c": Flag indicating a config file will follow
-    # #   - config_file: Path to the configuration file
-    # #   - "-p": Flag indicating this is a provisions setup
-    # run_db_mng(["-c "] + [config_file] + ["-p"])
     # run_obfuscator_env(["-i dbstack/.env.gen -o secret.env -p password123"])
     # run_obfuscator_env(["-i secret.env -o new.env -p password123 -m secret.env.mapping.json -d"])
     
     # Return the loaded configuration for use by other parts of the application
-    return config
+
+    # Examples of using the controller
+    result1 = local_db_controller.initialize_stack("SecurePassword123")
+    result2 = local_db_controller.start_service(DatabaseService.POSTGRES)
+    result3 = local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
+    # result4 = local_db_controller.backup_all_databases()
+    
+    print("Results:", result1, result2, result3)
+
+    # Provision databases using the default config
+    success = db_mng_control.provision_databases(config_file=config_file)
+    print(f"Provision result: {success}")
+    
+    # # Backup a database
+    # backup_result = db_mng_control.backup_database("postgres.main_db", "backups/main_backup.sql")
+    # print(f"Backup result: {backup_result}")
+    
+    # # Generate documentation
+    # docs_result = db_mng_control.generate_schema_documentation(
+    #     "postgres.main_db", 
+    #     "docs/schema.md"
+    # )
+    # print(f"Documentation result: {docs_result}")
+
+    # Example: Obfuscate a .env file
+    # env_file = ".env"
+    # password = "secret"
+    
+    # # Check if files exist before attempting operations
+    # if env_obfuscator.validate_files(env_file):
+    #     # Get default paths that would be used
+    #     default_output = env_obfuscator.get_default_output_path(env_file)
+    #     default_mapping = env_obfuscator.get_default_mapping_path(default_output)
+        
+    #     print(f"Default output would be: {default_output}")
+    #     print(f"Default mapping would be: {default_mapping}")
+        
+    #     # Basic obfuscation
+    #     # result1 = env_obfuscator.obfuscate(env_file, password)
+        
+    #     # Obfuscation with custom output path
+    #     # result2 = env_obfuscator.obfuscate(env_file, password, "secret.env")
+        
+    #     # Deobfuscation
+    #     result3 = env_obfuscator.deobfuscate(
+    #         "secret.env", 
+    #         "secret.env.mapping.json", 
+    #         password
+    #     )
+        
+    #     print("Results:", result1, result3)
+    # return config
 
 def serve():
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from dotenv import load_dotenv
-
     from rest.v1.routers import api_v1_router
     from core.config import settings  # Contains environment-specific settings
 
@@ -118,7 +160,21 @@ def serve():
     app = create_application()
 
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+     # Add command line argument parsing for host/port configuration
+    import argparse
+    parser = argparse.ArgumentParser(description="Start the Database and Environment Management API")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind the server to")
+    parser.add_argument("--reload", action="store_true", help="Enable hot reloading for development")
+    
+    args = parser.parse_args()
+    
+    uvicorn.run(
+        app,  
+        host=args.host,
+        port=args.port,
+        reload=args.reload
+    )
     # pass
 
 # Entry point: run the `serve` function only if this file is executed directly (not imported)
