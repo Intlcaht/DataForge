@@ -1,14 +1,7 @@
-from rest.v1.endpoints import items, db_management, obfuscator, utils
+from rest.v1.endpoints import db_management, obfuscator, utils
 from fastapi import APIRouter
 
 api_v1_router = APIRouter()
-
-# API endpoints
-api_v1_router.include_router(
-    items.router,
-    prefix="/items",
-    tags=["items"]
-)
 
 api_v1_router.include_router(
     db_management.router,
@@ -18,12 +11,12 @@ api_v1_router.include_router(
 
 api_v1_router.include_router(
     obfuscator.router,
-    prefix="/ob",
+    prefix="/sec",
     tags=["Obfuscator"]
 )
 
 api_v1_router.include_router(
     utils.router,
-    prefix="/utl",
+    prefix="/fns",
     tags=["Tasks"]
 )

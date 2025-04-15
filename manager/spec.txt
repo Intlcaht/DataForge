@@ -1,0 +1,578 @@
+Resource Deployment Service Web UI Specification
+This document provides a comprehensive specification for the Resource Deployment Service (RDS) web-based administrative interface, detailing the user experience, components, screens, and functionality required to effectively manage cloud resources across different regions.
+1. Overview
+The RDS Web UI is a responsive, browser-based application that provides administrators with an intuitive interface to deploy, monitor, and manage database and storage resources. The UI emphasizes clarity, efficiency, and security while providing access to all system capabilities.
+2. User Experience Goals
+
+Simplicity: Intuitive navigation and clear workflows for common tasks
+Visibility: Comprehensive monitoring and status information at a glance
+Efficiency: Minimize clicks for common operations and provide keyboard shortcuts
+Consistency: Uniform design patterns and interactions throughout the application
+Responsiveness: Optimized for both desktop and tablet view ports
+
+3. Technology Stack
+
+Frontend Framework: React with TypeScript
+UI Component Library: TailWind, ShadCN
+State Management: Redux Toolkit
+API Communication: Axios
+Form Handling: React Hook Form with Yup validation
+Visualization: D3.js for metrics visualization
+Code Editor: Monaco Editor for YAML configuration
+Authentication: Zitadel integration
+
+4. Authentication and Access Control
+4.1 Login Screen
+
+Zitadel-based authentication
+No user registration (admin access only)
+"Remember me" option
+Multi-factor authentication support
+Failed login attempt limitations
+
+4.2 Session Management
+
+Automatic timeout after configurable period of inactivity
+Idle warning before session expiration
+Session renewal option
+Force logout capability for administrators
+
+5. Layout and Navigation
+5.1 Main Layout
+
+Fixed top navigation bar
+
+System logo and name
+Current user information
+Notifications icon with counter
+Help and documentation access
+Logout button
+
+
+Left sidebar navigation (collapsible)
+
+Dashboard
+Resources
+Configurations
+Environment Files
+Monitoring
+Access Control
+System Administration
+
+
+Main content area
+
+Breadcrumb navigation
+Page title and description
+Action buttons relevant to current context
+Content panels with appropriate controls
+Status messages and notifications
+
+
+Footer
+
+Version information
+Copyright notice
+Links to documentation and support
+
+
+
+5.2 Responsive Behavior
+
+Sidebar collapses to icons on smaller screens
+Content areas reflow for tablet and mobile view ports
+Touch-optimized controls for tablet usage
+Critical actions require confirmation, especially on touch devices
+
+6. Dashboard
+6.1 Overview Panel
+
+Summary counts of resources by type and status
+Quick access cards for common actions (deploy resource, view alerts)
+System health indicators for core components
+Recent activity timeline (deployments, scaling events, errors)
+
+6.2 Resource Status Panel
+
+Visual representation of resources by region
+Status indicators using clear color coding
+Quick filters for viewing specific resource types or statuses
+Performance indicators for critical resources
+
+6.3 Alerts Panel
+
+Active alerts with severity indicators
+Quick links to affected resources
+Acknowledgment and resolution actions
+Filtering and sorting capabilities
+
+7. Resource Management
+7.1 Resource List Screen
+
+Table view with columns:
+
+Resource name
+Type (with icon)
+Region
+Status (with visual indicator)
+Key metrics (configurable)
+Actions menu
+
+
+Filtering and sorting capabilities
+
+Filter by type, region, status
+Search by name
+Sort by any column
+
+
+Bulk actions for selected resources
+
+Deploy
+Stop
+Restart
+Delete
+
+
+Add new resource button
+Export list in CSV/JSON format
+
+7.2 Resource Detail Screen
+7.2.1 Overview Tab
+
+Resource metadata (name, type, region, creation date)
+Current status with visual indicator
+Connection information (with copy buttons)
+Quick action buttons (deploy, stop, restart, scale, delete)
+Tags and description
+
+7.2.2 Configuration Tab
+
+YAML configuration display with syntax highlighting
+Edit configuration button (opens editor)
+Version history with diff view
+Validation results
+
+7.2.3 Metrics Tab
+
+Real-time and historical metrics visualization
+
+CPU utilization
+Memory usage
+Disk I/O
+Connection count
+Custom metrics based on resource type
+
+
+Time range selector
+Metric threshold indicators
+
+7.2.4 Logs Tab
+
+Log viewer with filtering capabilities
+Timestamp, severity, and message columns
+Search functionality
+Log level filter
+Download logs button
+
+7.2.5 Access Control Tab
+
+IP allowlist management
+Connected applications
+Active sessions
+Access history
+
+7.3 Resource Creation Wizard
+7.3.1 Step 1: Basic Information
+
+Resource name input
+Resource type selection (with visual indicators)
+Region selection (with map visualization)
+Description field
+Tags input
+
+7.3.2 Step 2: Configuration
+
+Based on selected resource type:
+
+Databases: Version, storage capacity, memory, CPU, replicas
+S3/Minio: Bucket configuration, storage capacity, access policies
+
+
+Advanced options toggle for power users
+
+7.3.3 Step 3: Access Control
+
+Initial admin credentials
+IP allowlist configuration
+Access control policies
+
+7.3.4 Step 4: Review and Create
+
+Summary of all configuration options
+Validation results
+Estimated cost indicator
+Terms acceptance checkbox
+Create button
+
+7.4 Resource Scaling Interface
+
+Current resource allocation display
+Slider controls for adjustable parameters:
+
+Memory
+CPU
+Storage
+Replicas (if applicable)
+
+
+Impact visualization (performance, cost)
+Scheduling option for delayed scaling
+Confirmation dialog with validation results
+
+8. Configuration Management
+8.1 Configuration List Screen
+
+Table of saved configurations with columns:
+
+Name
+Resource type
+Creation date
+Last modified date
+Version
+Actions
+
+
+Filtering and search capabilities
+Import configuration button
+Create new configuration button
+
+8.2 Configuration Editor
+
+Monaco editor with YAML syntax highlighting
+Schema validation with inline error indicators
+Code completion and suggestions
+Template insertion options
+Split view option (editor and preview)
+Save, Save As, and Validate buttons
+Version history sidebar
+
+8.3 Configuration Validation
+
+Validation results panel
+
+Syntax errors
+Schema validation errors
+Security issues
+Best practice recommendations
+
+
+Line-by-line issue highlighting
+Quick fix suggestions where applicable
+Severity indicators
+
+9. Environment File Management
+9.1 Environment File List Screen
+
+Table of processed environment files with columns:
+
+Filename
+Associated resource
+Creation date
+Size
+Actions (download, delete)
+
+
+Filter by associated resource
+Search by filename
+Upload new file button
+
+9.2 Environment File Upload
+
+Drag-and-drop upload area
+File selection button
+Resource association dropdown
+Preview of file contents
+Obfuscate button
+Security notice about sensitive data handling
+
+9.3 Environment File Detail
+
+File metadata
+Original and obfuscated hash information
+Download obfuscated file button
+Copy command for Go utility usage
+Associated resource link
+
+10. Monitoring and Alerts
+10.1 Monitoring Dashboard
+
+System-wide metrics visualization
+
+Resource utilization by type
+Resource utilization by region
+Error rate trends
+Deployment success rate
+
+
+Interactive charts with drill-down capability
+Time range selector
+Export data options
+
+10.2 Alert Management
+
+Alert list with columns:
+
+Severity (with visual indicator)
+Resource affected
+Alert message
+Time raised
+Status (active, acknowledged, resolved)
+Actions
+
+
+Filter by severity, resource, status
+Sort by any column
+Bulk acknowledge/resolve actions
+Alert detail view with contextual information and metrics
+
+10.3 Health Check Dashboard
+
+System component status with health indicators
+
+API Service
+Resource Orchestration
+Security Layer
+Monitoring Layer
+External integrations (Teleport, etc.)
+
+
+Historical uptime visualization
+Last checked timestamp
+Run health check button
+
+11. Access Control Management
+11.1 IP Allowlist Management
+
+Table of IP rules with columns:
+
+CIDR notation
+Description
+Associated resources
+Creation date
+Actions
+
+
+Add new rule form
+
+CIDR input with validation
+Description field
+Resource association multi-select
+
+
+Delete rule confirmation dialog
+
+11.2 Audit Log Viewer
+
+Comprehensive audit log table with columns:
+
+Timestamp
+User
+Action
+Resource affected
+IP address
+Result (success/failure)
+Additional details
+
+
+Advanced filtering capabilities
+
+Date range
+User
+Action type
+Resource
+Result
+
+
+Export logs functionality
+Retention policy indicator
+
+12. System Administration
+12.1 System Status
+
+Component status dashboard
+Resource utilization metrics
+Service health indicators
+Database connection status
+Job queue status
+
+12.2 Backup Management
+
+Backup status and history
+Manual backup initiation
+Backup scheduling configuration
+Restore capability
+Backup validation
+
+12.3 System Settings
+
+General settings
+
+Session timeout
+Default region
+UI theme
+
+
+Security settings
+
+Password policies
+MFA requirements
+Session policies
+
+
+Notification settings
+
+Alert channels
+Alert thresholds
+Notification templates
+
+
+
+13. Wizards and Guided Workflows
+13.1 Resource Deployment Wizard
+
+Simplified workflow for quick deployment
+Template-based configuration selection
+Minimal required inputs
+Progress visualization
+Success/failure feedback
+
+13.2 Troubleshooting Wizard
+
+Step-by-step guide for resolving common issues
+Resource selection
+Automated diagnostics
+Recommended actions
+Application to affected resources
+
+13.3 Migration Wizard
+
+Guide for moving resources between regions
+Source and destination selection
+Compatibility check
+Downtime estimation
+Scheduling options
+
+14. Notification System
+14.1 In-App Notifications
+
+Notification center accessible from top bar
+Categorized notifications:
+
+System alerts
+Resource status changes
+Job completions
+Security events
+
+
+Mark as read functionality
+Clear all option
+Notification preferences
+
+14.2 Real-Time Updates
+
+WebSocket integration for live updates
+Toast notifications for important events
+Status indicator animations
+Sound alerts (optional)
+
+15. Help and Documentation
+15.1 Contextual Help
+
+Help icons throughout the interface
+Tooltips for controls and fields
+Contextual help panels for complex operations
+Keyboard shortcut reference
+
+15.2 Documentation Browser
+
+Searchable documentation
+Quick start guides
+Technical reference
+Troubleshooting guides
+Video tutorials
+
+18. Performance Considerations
+
+Lazy loading of components and data
+Pagination for large data sets
+Data caching strategy
+Optimized API requests
+Asset optimization
+Progress indicators for long-running operations
+
+19. Error Handling
+19.1 Form Validation
+
+Inline validation with clear error messages
+Field-level error indicators
+Form-level validation summary
+Validation on blur and submit
+
+19.2 API Error Handling
+
+User-friendly error messages
+Technical details available on demand
+Retry capabilities for transient errors
+Fallback options when possible
+Error tracking and reporting
+
+19.3 Empty States
+
+Informative empty state designs for lists and dashboards
+Suggested actions for empty states
+Visual illustrations for context
+
+20. Testing and Quality Assurance
+
+Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
+Responsive design testing for various view ports
+Accessibility testing
+Performance testing
+User acceptance testing scenarios
+Security testing
+
+21. Implementation Phases
+Phase 1: Core Functionality
+
+Authentication integration
+Dashboard with basic metrics
+Resource listing and basic management
+Simple configuration editor
+Minimal monitoring capabilities
+
+Phase 2: Enhanced Management
+
+Complete resource management lifecycle
+Advanced configuration editor
+Environment file management
+Expanded monitoring and alerting
+Initial access control features
+
+Phase 3: Advanced Features
+
+Comprehensive monitoring dashboards
+Advanced access control
+System administration
+Guided wizards
+Help and documentation
+Complete audit logging
+
+22. Success Metrics
+
+Average time to deploy resources
+Resource management error rate
+UI task completion rate
+Average time spent on common workflows
+User satisfaction ratings
+Support ticket volume related to UI usage

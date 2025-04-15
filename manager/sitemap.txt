@@ -1,0 +1,207 @@
+Resource Deployment Service Web UI Sitemap
+Main Navigation Structure
+Authentication
+
+Login Screen
+
+Zitadel-based authentication
+Multi-factor authentication
+"Remember me" option
+
+
+
+Dashboard
+
+Overview Panel
+
+Summary counts
+Quick access cards
+System health indicators
+Recent activity timeline
+
+
+Resource Status Panel
+
+Regional resource visualization
+Status indicators
+Filtering options
+
+
+Alerts Panel
+
+Active alerts
+Quick links to affected resources
+Acknowledgment actions
+
+
+
+Resources
+
+Resource List
+
+Table view of all resources
+Filtering and sorting
+Bulk actions
+Add new resource button
+
+
+Resource Detail
+
+Overview Tab
+Configuration Tab
+Metrics Tab
+Logs Tab
+Access Control Tab
+
+
+Resource Creation Wizard
+
+Step 1: Basic Information
+Step 2: Configuration
+Step 3: Access Control
+Step 4: Review and Create
+
+
+Resource Scaling Interface
+
+Configurations
+
+Configuration List
+
+Table of saved configurations
+Filtering and search
+Import/create options
+
+
+Configuration Editor
+
+YAML editor with syntax highlighting
+Validation capabilities
+Template insertion
+Version history
+
+
+Configuration Validation
+
+Validation results panel
+Issue highlighting
+Fix suggestions
+
+
+
+Environment Files
+
+Environment File List
+
+Table of processed files
+Filtering and search
+Upload option
+
+
+Environment File Upload
+
+Drag-and-drop area
+Resource association
+Preview functionality
+
+
+Environment File Detail
+
+File metadata
+Hash information
+Download options
+
+
+
+Monitoring
+
+Monitoring Dashboard
+
+System-wide metrics
+Interactive charts
+Time range selection
+
+
+Alert Management
+
+Alert list with filtering
+Alert detail view
+Bulk actions
+
+
+Health Check Dashboard
+
+Component status indicators
+Uptime visualization
+Manual health check option
+
+
+
+Access Control
+
+IP Allowlist Management
+
+Table of IP rules
+Add/edit rule form
+Delete confirmation
+
+
+Audit Log Viewer
+
+Comprehensive audit logs
+Advanced filtering
+Export functionality
+
+
+
+System Administration
+
+System Status
+
+Component status dashboard
+Resource utilization metrics
+Service health indicators
+
+
+Backup Management
+
+Backup status and history
+Manual backup initiation
+Restore capabilities
+
+
+System Settings
+
+General settings
+Security settings
+Notification settings
+
+
+
+Help & Documentation
+
+Contextual Help
+
+Tooltips and help icons
+Keyboard shortcut reference
+
+
+Documentation Browser
+
+Searchable documentation
+Quick start guides
+Technical references
+Video tutorials
+
+
+
+Utility Features (Available Across the UI)
+
+Notification Center
+User Profile & Settings
+Session Management
+Guided Wizards
+
+Resource Deployment Wizard
+Troubleshooting Wizard
+Migration Wizard

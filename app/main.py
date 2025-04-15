@@ -71,15 +71,18 @@ def init():
     # Return the loaded configuration for use by other parts of the application
 
     # Examples of using the controller
-    result1 = local_db_controller.initialize_stack("SecurePassword123")
+    # result1 = local_db_controller.initialize_stack("SecurePassword123")
     result2 = local_db_controller.start_service(DatabaseService.POSTGRES)
     result3 = local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
     # result4 = local_db_controller.backup_all_databases()
     
-    print("Results:", result1, result2, result3)
+    print("Results:", result2, result3)
     # Provision databases using the default config
     success = db_mng_control.provision_databases(config_file=config_file)
     print(f"Provision result: {success}")
+
+    # env_obfuscator.obfuscate(".env", "password6789hjk", ".env.keyd")
+    # env_obfuscator.deobfuscate(".env.keyd", ".env.keyd.mapping.json", "password6789hjk")
    
 
 def serve():
@@ -134,6 +137,7 @@ def serve():
 
 # Entry point: run the `serve` function only if this file is executed directly (not imported)
 if __name__ == '__main__':
+    # init()
     serve()
 
 

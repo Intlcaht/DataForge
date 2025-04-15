@@ -3,7 +3,14 @@ import os
 import tempfile
 from typing import List
 import uuid
-from fastapi import BackgroundTasks, UploadFile, logger
+from fastapi import BackgroundTasks, UploadFile
+import logging
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("BK_Helpers_Service")
 from pydantic import BaseModel, Field
 
 

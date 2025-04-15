@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from rest.v1.helpers import task_results, temp_files
 router = APIRouter()
 
-@router.get("/api/tasks/{task_id}")
+@router.get("/tasks/{task_id}")
 async def get_task_status(task_id: str):
     """Get the status and result of a previously submitted task"""
     if task_id not in task_results:
@@ -14,7 +14,7 @@ async def get_task_status(task_id: str):
     task = task_results[task_id]
     return task
 
-@router.get("/api/files/{file_id}")
+@router.get("/files/{file_id}")
 async def download_file(file_id: str):
     """Download a processed file"""
     if file_id not in temp_files:
@@ -27,7 +27,7 @@ async def download_file(file_id: str):
         media_type="application/octet-stream"
     )
 
-@router.delete("/api/files/{file_id}")
+@router.delete("/files/{file_id}")
 async def delete_temp_file(file_id: str):
     """Delete a temporary file"""
     if file_id not in temp_files:
@@ -41,7 +41,7 @@ async def delete_temp_file(file_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
-@router.get("/api/health")
+@router.get("/health")
 async def health_check():
     """API health check endpoint"""
     return {

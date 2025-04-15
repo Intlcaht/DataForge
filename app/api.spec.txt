@@ -1,0 +1,476 @@
+Resource Deployment Service API Specification
+API Overview
+This specification defines the RESTful API for the Resource Deployment Service (RDS), enabling the deployment, management, and monitoring of cloud resources across different regions. The API follows RESTful principles with JSON as the primary data interchange format.
+Base URL
+https://api.resourcedeployment.service/v1
+Authentication
+All API requests require authentication using:
+
+JSON Web Tokens (JWT) via the Authorization header
+API keys for programmatic access
+
+Authentication is managed through Zitadel integration.
+API Endpoints
+Resource Management
+List Resources
+
+Endpoint: GET /resources
+Description: Retrieves a list of all resources managed by the system.
+Query Parameters:
+
+region (optional): Filter resources by region
+type (optional): Filter by resource type (postgres, mariadb, mongodb, neo4j, influxdb, minio)
+status (optional): Filter by status (running, stopped, failed)
+page (optional): Page number for pagination
+limit (optional): Number of resources per page
+
+
+Response: Collection of resource objects with summary information
+
+Get Resource Details
+
+Endpoint: GET /resources/{id}
+Description: Retrieves detailed information about a specific resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Response: Detailed resource object including configuration, status, and connection information
+
+Create Resource
+
+Endpoint: POST /resources
+Description: Creates a new resource based on provided configuration.
+Request Body: Resource configuration in JSON format
+Response: Created resource object with assigned ID and status
+
+Deploy Resource
+
+Endpoint: POST /resources/{id}/deploy
+Description: Initiates the deployment of a configured resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Response: Deployment job information including job ID and status
+
+Stop Resource
+
+Endpoint: POST /resources/{id}/stop
+Description: Stops a running resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Response: Operation status and resource state information
+
+Restart Resource
+
+Endpoint: POST /resources/{id}/restart
+Description: Restarts a resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Response: Operation status and resource state information
+
+Scale Resource
+
+Endpoint: POST /resources/{id}/scale
+Description: Scales a resource according to provided parameters.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Request Body: Scaling parameters in JSON format
+Response: Operation status and updated resource information
+
+Get Resource Status
+
+Endpoint: GET /resources/{id}/status
+Description: Retrieves the current status of a specific resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Response: Resource status information including health metrics
+
+Delete Resource
+
+Endpoint: DELETE /resources/{id}
+Description: Terminates and removes a resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Query Parameters:
+
+force (optional): Force deletion even if resource is running
+
+
+Response: Operation status
+
+Configuration Management
+List Configurations
+
+Endpoint: GET /configs
+Description: Retrieves a list of all resource configurations.
+Query Parameters:
+
+type (optional): Filter by resource type
+region (optional): Filter by region
+page (optional): Page number for pagination
+limit (optional): Number of configurations per page
+
+
+Response: Collection of configuration objects with summary information
+
+Get Configuration
+
+Endpoint: GET /configs/{id}
+Description: Retrieves a specific configuration.
+Path Parameters:
+
+id: Unique identifier of the configuration
+
+
+Response: Complete configuration object
+
+Create Configuration
+
+Endpoint: POST /configs
+Description: Creates a new resource configuration.
+Request Body: Configuration in YAML or JSON format
+Response: Created configuration object with assigned ID
+
+Update Configuration
+
+Endpoint: PUT /configs/{id}
+Description: Updates an existing configuration.
+Path Parameters:
+
+id: Unique identifier of the configuration
+
+
+Request Body: Updated configuration in YAML or JSON format
+Response: Updated configuration object
+
+Delete Configuration
+
+Endpoint: DELETE /configs/{id}
+Description: Deletes a configuration.
+Path Parameters:
+
+id: Unique identifier of the configuration
+
+
+Response: Operation status
+
+Validate Configuration
+
+Endpoint: POST /configs/validate
+Description: Validates a configuration without creating it.
+Request Body: Configuration in YAML or JSON format to validate
+Response: Validation results including any errors or warnings
+
+Import Configuration
+
+Endpoint: POST /configs/import
+Description: Imports a configuration from external source.
+Request Body: Configuration source information and format
+Response: Imported configuration object
+
+Export Configuration
+
+Endpoint: POST /configs/export
+Description: Exports a configuration to specified format.
+Request Body: Export parameters including configuration ID and format
+Response: Exported configuration in requested format
+
+Environment File Management
+List Environment Files
+
+Endpoint: GET /env-files
+Description: Retrieves a list of all processed environment files.
+Query Parameters:
+
+resource (optional): Filter by associated resource ID
+page (optional): Page number for pagination
+limit (optional): Number of files per page
+
+
+Response: Collection of environment file metadata
+
+Get Environment File
+
+Endpoint: GET /env-files/{id}
+Description: Retrieves metadata about a specific environment file.
+Path Parameters:
+
+id: Unique identifier of the environment file
+
+
+Response: Environment file metadata (not the actual file content)
+
+Obfuscate Environment File
+
+Endpoint: POST /env-files/obfuscate
+Description: Obfuscates an environment file.
+Request Body: Environment file content or upload
+Response: Metadata about the obfuscated file
+
+Download Obfuscated File
+
+Endpoint: GET /env-files/{id}/download
+Description: Downloads an obfuscated environment file.
+Path Parameters:
+
+id: Unique identifier of the environment file
+
+
+Response: Obfuscated file content as downloadable file
+
+Delete Environment File
+
+Endpoint: DELETE /env-files/{id}
+Description: Deletes an environment file from the system.
+Path Parameters:
+
+id: Unique identifier of the environment file
+
+
+Response: Operation status
+
+Monitoring and Metrics
+Get Resource Metrics
+
+Endpoint: GET /resources/{id}/metrics
+Description: Retrieves monitoring metrics for a specific resource.
+Path Parameters:
+
+id: Unique identifier of the resource
+
+
+Query Parameters:
+
+metric (optional): Specific metric to retrieve (cpu, memory, disk, etc.)
+timeframe (optional): Time period for metrics (1h, 24h, 7d, etc.)
+
+
+Response: Resource metrics data
+
+Get System Health
+
+Endpoint: GET /system/health
+Description: Retrieves overall system health status.
+Response: System health information including component statuses
+
+Get Alerts
+
+Endpoint: GET /alerts
+Description: Retrieves active alerts.
+Query Parameters:
+
+severity (optional): Filter by alert severity
+resource (optional): Filter by associated resource ID
+resolved (optional): Include resolved alerts
+
+
+Response: Collection of alert objects
+
+Acknowledge Alert
+
+Endpoint: POST /alerts/{id}/acknowledge
+Description: Acknowledges an active alert.
+Path Parameters:
+
+id: Unique identifier of the alert
+
+
+Response: Updated alert object
+
+Access Control Management
+List IP Allow Rules
+
+Endpoint: GET /access/ip-rules
+Description: Retrieves IP allowlist rules.
+Query Parameters:
+
+resource (optional): Filter by associated resource ID
+
+
+Response: Collection of IP rule objects
+
+Create IP Allow Rule
+
+Endpoint: POST /access/ip-rules
+Description: Creates a new IP allowlist rule.
+Request Body: IP rule definition including IP range and associated resources
+Response: Created IP rule object
+
+Delete IP Allow Rule
+
+Endpoint: DELETE /access/ip-rules/{id}
+Description: Deletes an IP allowlist rule.
+Path Parameters:
+
+id: Unique identifier of the IP rule
+
+
+Response: Operation status
+
+Administration
+Get System Status
+
+Endpoint: GET /admin/status
+Description: Retrieves the status of system components.
+Response: System component status information
+
+Get Audit Logs
+
+Endpoint: GET /admin/audit-logs
+Description: Retrieves system audit logs.
+Query Parameters:
+
+action (optional): Filter by action type
+user (optional): Filter by user
+resource (optional): Filter by resource ID
+startDate (optional): Filter logs from this date
+endDate (optional): Filter logs until this date
+page (optional): Page number for pagination
+limit (optional): Number of logs per page
+
+
+Response: Collection of audit log entries
+
+Initiate System Backup
+
+Endpoint: POST /admin/backups
+Description: Initiates a system backup.
+Request Body: Backup parameters including scope and destination
+Response: Backup job information
+
+Data Models
+Resource Object
+{
+  "id": "string",
+  "name": "string",
+  "type": "string", // postgres, mariadb, mongodb, neo4j, influxdb, minio
+  "region": "string",
+  "status": "string", // pending, running, stopped, failed
+  "config": {
+    // Resource-specific configuration
+  },
+  "connection": {
+    // Connection information (when applicable)
+  },
+  "metrics": {
+    // Current resource metrics (when applicable)
+  },
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
+}
+Configuration Object
+{
+  "id": "string",
+  "name": "string",
+  "description": "string",
+  "resource_type": "string",
+  "content": "string", // YAML or JSON content
+  "version": "number",
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
+}
+Environment File Object
+{
+  "id": "string",
+  "name": "string",
+  "resource_id": "string", // Associated resource (optional)
+  "original_hash": "string", // Hash of original file
+  "obfuscated_hash": "string", // Hash of obfuscated file
+  "created_at": "timestamp"
+}
+Alert Object
+{
+  "id": "string",
+  "resource_id": "string",
+  "severity": "string", // info, warning, critical
+  "message": "string",
+  "details": "string",
+  "status": "string", // active, acknowledged, resolved
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
+}
+IP Rule Object
+{
+  "id": "string",
+  "cidr": "string", // IP range in CIDR notation
+  "description": "string",
+  "resource_ids": ["string"], // Associated resources
+  "created_at": "timestamp"
+}
+Audit Log Entry
+{
+  "id": "string",
+  "user": "string",
+  "action": "string",
+  "resource_id": "string", // If applicable
+  "details": "string",
+  "ip_address": "string",
+  "timestamp": "timestamp"
+}
+Error Handling
+All API errors follow a consistent format:
+{
+  "error": {
+    "code": "string", // Error code
+    "message": "string", // Human-readable error message
+    "details": "array" // Optional array of detailed error information
+  },
+  "request_id": "string" // For tracking and debugging
+}
+Common HTTP status codes:
+
+200: Success
+201: Resource created
+400: Bad request (invalid input)
+401: Unauthorized (authentication required)
+403: Forbidden (insufficient permissions)
+404: Resource not found
+409: Conflict (resource already exists)
+422: Unprocessable entity (validation failed)
+500: Internal server error
+
+Pagination
+List endpoints support pagination through the following query parameters:
+
+page: Page number (starting from 1)
+limit: Number of items per page
+
+Paginated responses include metadata:
+{
+  "data": [...], // Array of items
+  "pagination": {
+    "total_items": number,
+    "total_pages": number,
+    "current_page": number,
+    "items_per_page": number
+  }
+}
+Rate Limiting
+API requests are subject to rate limiting. The current limits are communicated via HTTP headers:
+
+X-RateLimit-Limit: Total allowed requests in the current period
+X-RateLimit-Remaining: Remaining requests in the current period
+X-RateLimit-Reset: Time when the rate limit resets (Unix timestamp)
+
+When rate limit is exceeded, the API responds with 429 Too Many Requests status code.
+Versioning
+The API is versioned through the URL path (/v1/). Future breaking changes will be introduced as new API versions.

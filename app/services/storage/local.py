@@ -319,7 +319,7 @@ class _DBController:
 
 def _run_function(args: List[str]) -> Dict[str, Any]:
         """a function to run the dbctl.rc.sh script."""
-        from core.utils.scripts import run_db_ctl_rc
-        return run_db_ctl_rc(args) 
+        from core.utils.scripts import run_db_ctl
+        return run_db_ctl(args) 
 
 local_db_controller = _DBController(_run_function)

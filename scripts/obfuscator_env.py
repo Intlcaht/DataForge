@@ -26,6 +26,8 @@ import os
 import argparse
 import base64
 import json
+import hmac
+import hashlib
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.primitives import padding
@@ -56,19 +58,40 @@ def generate_key(password: str, salt: bytes) -> bytes:
     )
     return kdf.derive(password.encode())
 
-def encrypt_value(value: str, key: bytes) -> str:
+def derive_value_specific_key(base_key: bytes, original_key_name: str) -> bytes:
     """
-    Encrypts a plaintext string using AES-CBC encryption.
+    Derives a value-specific encryption key by incorporating the original key name.
+    This ensures that if the key name in the mapping is altered, decryption will fail.
+
+    Args:
+        base_key (bytes): The base encryption key.
+        original_key_name (str): The original environment variable key name.
+
+    Returns:
+        bytes: A 32-byte key derived from the base key and original key name.
+    """
+    # Create an HMAC using the base key and the original key name
+    h = hmac.new(base_key, original_key_name.encode(), hashlib.sha256)
+    return h.digest()
+
+def encrypt_value(value: str, key: bytes, original_key_name: str) -> str:
+    """
+    Encrypts a plaintext string using AES-CBC encryption with a key derived from
+    both the main encryption key and the original key name.
 
     Args:
         value (str): The plaintext value to encrypt.
-        key (bytes): The AES key.
+        key (bytes): The base AES key.
+        original_key_name (str): The original key name to bind to the encryption.
 
     Returns:
         str: The base64-encoded ciphertext, including the IV.
     """
+    # Derive a key-specific encryption key
+    value_key = derive_value_specific_key(key, original_key_name)
+    
     iv = os.urandom(16)  # Initialization vector
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(value_key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
 
     padder = padding.PKCS7(128).padder()
@@ -77,22 +100,27 @@ def encrypt_value(value: str, key: bytes) -> str:
     encrypted = encryptor.update(padded_data) + encryptor.finalize()
     return base64.b64encode(iv + encrypted).decode()
 
-def decrypt_value(encrypted_value: str, key: bytes) -> str:
+def decrypt_value(encrypted_value: str, key: bytes, original_key_name: str) -> str:
     """
-    Decrypts a base64-encoded ciphertext using AES-CBC.
+    Decrypts a base64-encoded ciphertext using AES-CBC with a key derived from
+    both the main key and the original key name.
 
     Args:
         encrypted_value (str): The base64-encoded ciphertext (with IV).
-        key (bytes): The AES key.
+        key (bytes): The base AES key.
+        original_key_name (str): The original key name used during encryption.
 
     Returns:
         str: The decrypted plaintext string.
     """
+    # Derive the same key-specific encryption key used during encryption
+    value_key = derive_value_specific_key(key, original_key_name)
+    
     data = base64.b64decode(encrypted_value.encode())
     iv = data[:16]
     ciphertext = data[16:]
 
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(value_key), modes.CBC(iv), backend=default_backend())
     decryptor = cipher.decryptor()
     padded_data = decryptor.update(ciphertext) + decryptor.finalize()
 
@@ -126,7 +154,9 @@ def obfuscate_env_file(input_file: str, output_file: str, password: str):
             if '=' in line:
                 key_name, value = line.strip().split('=', 1)
                 obfuscated_key = base64.urlsafe_b64encode(key_name.encode()).decode().strip("=")
-                encrypted_value = encrypt_value(value, key)
+                
+                # Now we pass the original key name to bind it to the encryption
+                encrypted_value = encrypt_value(value, key, key_name)
 
                 obfuscation_mapping[obfuscated_key] = key_name
                 file.write(f"{obfuscated_key}={encrypted_value}\n")
@@ -164,8 +194,16 @@ def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, p
             if '=' in line:
                 obfuscated_key, encrypted_value = line.strip().split('=', 1)
                 original_key = obfuscation_mapping[obfuscated_key]
-                decrypted_value = decrypt_value(encrypted_value, key)
-                file.write(f"{original_key}={decrypted_value}\n")
+                
+                try:
+                    # Pass the original key name during decryption
+                    decrypted_value = decrypt_value(encrypted_value, key, original_key)
+                    file.write(f"{original_key}={decrypted_value}\n")
+                except Exception as e:
+                    print(f"❌ Error decrypting value for key '{original_key}': {str(e)}")
+                    print("   This may indicate tampering with the mapping file.")
+                    # Write the error as a comment in the file to indicate the issue
+                    file.write(f"# ERROR decrypting {original_key}: Possible mapping tampering\n")
 
     print(f"🔓 Deobfuscated file saved as: {output_file}")
 

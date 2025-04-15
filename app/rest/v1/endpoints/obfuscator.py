@@ -4,9 +4,15 @@ import tempfile
 from typing import Optional
 
 # FastAPI imports
-from fastapi import APIRouter, HTTPException, Depends, Query, Body, File, UploadFile, BackgroundTasks, logger
+from fastapi import APIRouter, HTTPException, Depends, Query, Body, File, UploadFile, BackgroundTasks
 from pydantic import BaseModel, Field
-
+import logging
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("BK_Obfuscator_Service")
 from rest.v1.helpers import FileUploadResponse, TaskResponse, save_upload_file, task_results, temp_files
 
 class ObfuscateRequest(BaseModel):
@@ -21,7 +27,7 @@ class DeobfuscateRequest(BaseModel):
 
 router = APIRouter()
 
-@router.post("/api/env/upload", response_model=FileUploadResponse)
+@router.post("/env/upload", response_model=FileUploadResponse)
 async def upload_env_file(file: UploadFile = File(...)):
     """Upload an environment file for processing"""
     if not file.filename.endswith(('.env', '.env.obfuscated', '.json')):
@@ -35,7 +41,7 @@ async def upload_env_file(file: UploadFile = File(...)):
         "temp_path": temp_files[file_id]["path"]
     }
 
-@router.post("/api/env/obfuscate/{file_id}", response_model=TaskResponse)
+@router.post("/env/obfuscate/{file_id}", response_model=TaskResponse)
 async def obfuscate_env_file(
     file_id: str, 
     request: ObfuscateRequest,
@@ -56,7 +62,7 @@ async def obfuscate_env_file(
             if request.output_filename:
                 output_path = os.path.join(tempfile.gettempdir(), request.output_filename)
                 
-            result = await env_obfuscator.obfuscate(input_path, request.password, output_path)
+            result = env_obfuscator.obfuscate(input_path, request.password, output_path)
             
             # Track output files
             if "output_files" in result and "output_file" in result["output_files"]:
@@ -96,7 +102,7 @@ async def obfuscate_env_file(
         "message": "File obfuscation started"
     }
 
-@router.post("/api/env/deobfuscate", response_model=TaskResponse)
+@router.post("/env/deobfuscate", response_model=TaskResponse)
 async def deobfuscate_env_file(
     background_tasks: BackgroundTasks,
     obfuscated_file_id: str = Query(..., description="ID of the uploaded obfuscated file"),
@@ -121,7 +127,7 @@ async def deobfuscate_env_file(
             if request.output_filename:
                 output_path = os.path.join(tempfile.gettempdir(), request.output_filename)
                 
-            result = await env_obfuscator.deobfuscate(
+            result = env_obfuscator.deobfuscate(
                 input_path, 
                 mapping_path, 
                 request.password, 

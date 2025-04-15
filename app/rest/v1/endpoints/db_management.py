@@ -1,6 +1,13 @@
 import uuid
 import asyncio
-from fastapi import APIRouter, BackgroundTasks, logger
+from fastapi import APIRouter, BackgroundTasks
+import logging
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("BK_DB_Service")
 from pydantic import BaseModel, Field
 from typing import Optional
 from services.storage.local import local_db_controller as db_controller
@@ -21,7 +28,7 @@ class InitializeStackRequest(BaseModel):
 
 router = APIRouter()
 
-@router.post("/api/db/initialize", response_model=TaskResponse)
+@router.post("/initialize", response_model=TaskResponse)
 async def initialize_stack(request: InitializeStackRequest, background_tasks: BackgroundTasks):
     """Initialize the database stack with Terraform"""
     task_id = str(uuid.uuid4())
@@ -52,7 +59,7 @@ async def initialize_stack(request: InitializeStackRequest, background_tasks: Ba
         "message": "Stack initialization started"
     }
 
-@router.post("/api/db/service", response_model=TaskResponse)
+@router.post("/service", response_model=TaskResponse)
 async def manage_service(request: ServiceCommandRequest, background_tasks: BackgroundTasks):
     """Execute a command on a specific database service"""
     task_id = str(uuid.uuid4())
@@ -79,7 +86,7 @@ async def manage_service(request: ServiceCommandRequest, background_tasks: Backg
         "message": f"Service command '{request.command}' for '{request.service}' started"
     }
 
-@router.post("/api/db/all", response_model=TaskResponse)
+@router.post("/all", response_model=TaskResponse)
 async def manage_all_services(request: AllServicesCommandRequest, background_tasks: BackgroundTasks):
     """Execute a command on all database services"""
     task_id = str(uuid.uuid4())
