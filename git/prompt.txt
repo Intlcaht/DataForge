@@ -1,0 +1,12 @@
+provide an exhaustive spec on a remote versioning system that will be a custom bash script
+
+features:
+initialize git with more than one origin, a public, a private and
+another origin this could be dynamic
+initialize git submodules
+initialize the git flow pattern
+initialize a .gitignore file 
+rename the main branch to main from master
+add an initial commit
+
+no code

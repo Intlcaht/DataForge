@@ -1,0 +1,148 @@
+# =============================================================================
+# ANSIBLE HOSTS INVENTORY FILE
+# =============================================================================
+#
+# This inventory file defines all servers in the infrastructure, organized by
+# their functional groups. Each server has specific variables defined to
+# customize its deployment and configuration.
+#
+# Usage: ansible-playbook -i hosts playbook.yml
+
+# =============================================================================
+# APPLICATION SERVERS
+# =============================================================================
+
+# Coolify - Self-hosted PaaS/application deployment platform
+# Used for hosting and managing containerized applications
+[coolify]
+deploy.localhost.com ansible_host=10.10.1.10 ansible_user=admin
+
+# Kasm - Remote browser isolation and desktop virtualization platform
+# Provides secure remote access to browsers and applications
+[kasm]
+kasm.localhost.com ansible_host=10.10.1.20 ansible_user=admin
+
+# Development - Server for development tools and CI/CD operations
+# Used for code testing, building, and development environments
+[development]
+dev.localhost.com ansible_host=10.10.1.30 ansible_user=admin
+
+# =============================================================================
+# KUBERNETES CLUSTER (K3S)
+# =============================================================================
+
+# K3s cluster nodes - Lightweight Kubernetes distribution
+# Used for container orchestration and microservice deployment
+[k3s]
+k3s-nd1.localhost.com ansible_host=10.10.2.10 ansible_user=admin
+k3s-nd2.localhost.com ansible_host=10.10.2.11 ansible_user=admin
+k3s-nd3.localhost.com ansible_host=10.10.2.12 ansible_user=admin
+
+# K3s server node (control plane)
+[k3s_server]
+k3s-nd1.localhost.com
+
+# K3s agent nodes (workers)
+[k3s_agent]
+k3s-nd2.localhost.com
+k3s-nd3.localhost.com
+
+# =============================================================================
+# LOGICAL GROUPS
+# =============================================================================
+
+# All application servers group
+[apps:children]
+coolify
+kasm
+development
+
+# All Kubernetes nodes
+[kubernetes:children]
+k3s
+
+# All production servers
+[production:children]
+coolify
+k3s
+
+# All servers
+[all:children]
+apps
+kubernetes
+
+# =============================================================================
+# GROUP VARIABLES
+# =============================================================================
+
+[all:vars]
+# Common variables for all hosts
+ansible_ssh_port=2222 # Custom SSH port for enhanced security
+ansible_python_interpreter=/usr/bin/python3
+ansible_connection=ssh
+backup_enabled=false # Disable automated backups
+
+[apps:vars]
+# Variables specific to application servers
+app_user=g33k                  # User for application management
+docker_storage_driver=overlay2 # Docker storage driver
+enable_monitoring=true         # Enable Prometheus monitoring
+
+[coolify:vars]
+# Coolify-specific variables
+coolify_version=4.0.0
+coolify_port=8000
+coolify_db_path=/opt/coolify/db
+enable_https=true
+coolify_domain=deploy.localhost.com
+
+[kasm:vars]
+# Kasm-specific variables
+kasm_version=1.14.0
+kasm_port=443
+kasm_db_type=postgres
+kasm_memory_min=4G
+kasm_domain=workspace.localhost.com
+
+[development:vars]
+# Development server specific variables
+dev_tools=["git", "docker", "php", "python", "nodejs", "go"]
+gitlab_runner_enabled=true
+sonarqube_enabled=true
+dev_user_extra_groups=["docker", "sudo"]
+
+[k3s:vars]
+# Variables for all K3s nodes
+k3s_version=v1.27.1+k3s1
+k3s_network_cidr=10.42.0.0/16
+pod_cidr=10.42.0.0/16
+service_cidr=10.43.0.0/16
+cni_plugin=flannel
+enable_metrics_server=true
+
+[k3s_server:vars]
+# Variables specific to K3s server node
+k3s_server_args="--disable traefik --disable servicelb --kube-apiserver-arg='feature-gates=RemoveSelfLink=false'"
+is_control_plane=true
+
+[k3s_agent:vars]
+# Variables specific to K3s agent nodes
+k3s_agent_args="--node-label worker=true"
+
+# =============================================================================
+# ADDITIONAL HOST VARIABLES
+# =============================================================================
+
+# Host-specific variables can be defined here for unique configurations
+[k3s-nd1.localhost.com:vars]
+node_role=master
+etcd_enabled=true
+additional_labels="{'storage': 'ssd', 'network': 'high'}"
+
+[k3s-nd2.localhost.com:vars]
+node_role=worker
+additional_labels="{'app': 'true', 'storage': 'hdd'}"
+
+[k3s-nd3.localhost.com:vars]
+node_role=worker
+additional_labels="{'app': 'true', 'storage': 'hdd'}"

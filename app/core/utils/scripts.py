@@ -72,6 +72,44 @@ def rn_scrpt(file, args):
     # A value of 0 means success; any non-zero value indicates failure.
     return result.returncode
 
+def clean_command(command_str):
+    """
+    Extract and sanitize a command from a raw Python-evaluated string.
+
+    Example:
+        "python ['script.py', ['--option', 'value']]" 
+        -> "python script.py --option value"
+
+    Handles:
+    - Matching command and arguments using regex
+    - Evaluating Python list-like syntax using ast.literal_eval
+    - Flattening any nested argument lists
+    """
+    import re
+    import ast
+    from .utils import flatten_list
+
+    match = re.match(r"(\w+)\s*(.*)", command_str)
+    if match:
+        command = match.group(1)
+        args_str = match.group(2).strip()
+
+        try:
+            # Wrap args_str in brackets to evaluate as a list
+            args_list = ast.literal_eval(f"[{args_str}]")
+            if isinstance(args_list, list):
+                args_list = flatten_list(args_list)
+        except (SyntaxError, ValueError):
+            # If the arguments can't be parsed, default to empty list
+            args_list = []
+
+        # Construct command string by joining the command and arguments
+        cleaned_command = f"{command} {' '.join(map(str, args_list))}"
+        return cleaned_command.strip()
+
+    # If no match was found, return stripped original string
+    return command_str.strip()
+
 def rn_pyscrpt(args): 
     """
     rn_pyscrpt: Execute a dynamically cleaned Python command string in a subprocess.
@@ -104,45 +142,8 @@ def rn_pyscrpt(args):
     """
     import logging
     from .shell import execute_command, set_verbosity 
-    from .utils import flatten_list
+    
     set_verbosity(logging.DEBUG)
-
-    import re
-    import ast
-
-    def clean_command(command_str):
-        """
-        Extract and sanitize a command from a raw Python-evaluated string.
-
-        Example:
-            "python ['script.py', ['--option', 'value']]" 
-            -> "python script.py --option value"
-
-        Handles:
-        - Matching command and arguments using regex
-        - Evaluating Python list-like syntax using ast.literal_eval
-        - Flattening any nested argument lists
-        """
-        match = re.match(r"(\w+)\s*(.*)", command_str)
-        if match:
-            command = match.group(1)
-            args_str = match.group(2).strip()
-
-            try:
-                # Wrap args_str in brackets to evaluate as a list
-                args_list = ast.literal_eval(f"[{args_str}]")
-                if isinstance(args_list, list):
-                    args_list = flatten_list(args_list)
-            except (SyntaxError, ValueError):
-                # If the arguments can't be parsed, default to empty list
-                args_list = []
-
-            # Construct command string by joining the command and arguments
-            cleaned_command = f"{command} {' '.join(map(str, args_list))}"
-            return cleaned_command.strip()
-
-        # If no match was found, return stripped original string
-        return command_str.strip()
 
     # Construct and execute cleaned command
     # Use shell=True to allow full shell features (e.g., redirection, pipes)
@@ -151,6 +152,33 @@ def rn_pyscrpt(args):
 
     # Return the subprocess's return code (0 = success)
     return result.returncode
+
+def rn_nsbl_scrpt(args): 
+    """
+    rn_nsbl_scrpt: Execute an ansible script against the hosts.
+
+    Call:
+        rn_nsbl_scrpt(args)
+
+    """
+    import logging
+    from .shell import execute_command, set_verbosity 
+    
+    set_verbosity(logging.DEBUG)
+
+    # Construct and execute cleaned command
+    # Use shell=True to allow full shell features (e.g., redirection, pipes)
+    # verbose=True to display the output in logs
+    result = execute_command(clean_command(f"ansible-playbook {args}"), shell=True, verbose=True)    
+
+    # Return the subprocess's return code (0 = success)
+    return result.returncode
+
+def run_hosts_playbook(args):
+    return rn_nsbl_scrpt('-i scripts/ansible/hosts.toml', args)
+
+def run_node_script(file, args, i='all', env={}):
+    return run_hosts_playbook(f"scripts/ansible/executor.yml -e script_path={file} -e script_args={args} -l {i} -e '{"script_env": {env}}' ")
 
 def run_env_gen(args):
     return rn_scrpt('scripts/env_yaml_gen.sh', args)

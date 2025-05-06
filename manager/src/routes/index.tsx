@@ -17,6 +17,8 @@ function DatabaseManagementDashboard() {
     const [databases] = useState([
         { name: 'postgres.production-db-1', status: 'Healthy', type: 'PostgreSQL', size: '250GB' },
         { name: 'mariadb.staging-db-1', status: 'Warning', type: 'MySQL', size: '100GB' },
+        { name: 'neo4j.pipe-db-1', status: 'Warning', type: 'Neo4j', size: '10GB' },
+        { name: 'redis.job-db-1', status: 'Healthy', type: 'Redis', size: '32GB' },
     ]);
 
     const recentActivities = [

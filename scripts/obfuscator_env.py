@@ -3,6 +3,7 @@ obfuscator_env.py
 
 A Python script for encrypting and obfuscating environment (.env) files using AES encryption.
 It supports both obfuscation and deobfuscation, maintaining a mapping between original and obfuscated keys.
+Enhanced with application key requirement for additional security.
 
 Dependencies:
     - cryptography
@@ -13,13 +14,13 @@ Install cryptography via pip:
 
 Example usage:
     # To obfuscate a file
-    python obfuscator_env.py -i .env -p "secret"
+    python obfuscator_env.py -i .env -p "secret" -a "app_key_123"
 
     # To obfuscate and provide a custom output file
-    python obfuscator_env.py -i .env -o secret.env -p "secret"
+    python obfuscator_env.py -i .env -o secret.env -p "secret" -a "app_key_123"
 
     # To deobfuscate a file
-    python obfuscator_env.py -i .env.obfuscated -m .env.obfuscated.mapping.json -p "secret" -d
+    python obfuscator_env.py -i .env.obfuscated -m .env.obfuscated.mapping.json -p "secret" -a "app_key_123" -d
 """
 
 import os
@@ -37,17 +38,25 @@ from cryptography.hazmat.backends import default_backend
 # Global default extension for obfuscated files
 DEFAULT_OUTPUT_EXTENSION = "obfuscated"
 
-def generate_key(password: str, salt: bytes) -> bytes:
+def generate_key(password: str, app_key: str, salt: bytes) -> bytes:
     """
-    Generates a 32-byte AES encryption key from a password using the Scrypt key derivation function.
+    Generates a 32-byte AES encryption key from a password and application key using the Scrypt KDF.
+    
+    The application key adds an additional layer of security by requiring API clients to provide
+    not just the password but also a valid application key that would typically be distributed
+    separately from the password.
 
     Args:
-        password (str): The password to derive the key from.
+        password (str): The user password to derive the key from.
+        app_key (str): Application-specific key required for encryption/decryption.
         salt (bytes): A random salt to make key derivation unique.
 
     Returns:
         bytes: The derived encryption key.
     """
+    # Combine password and app_key to create a stronger composite key
+    composite_key = f"{password}:{app_key}"
+    
     kdf = Scrypt(
         salt=salt,
         length=32,
@@ -56,7 +65,7 @@ def generate_key(password: str, salt: bytes) -> bytes:
         p=1,
         backend=default_backend()
     )
-    return kdf.derive(password.encode())
+    return kdf.derive(composite_key.encode())
 
 def derive_value_specific_key(base_key: bytes, original_key_name: str) -> bytes:
     """
@@ -129,7 +138,23 @@ def decrypt_value(encrypted_value: str, key: bytes, original_key_name: str) -> s
 
     return value.decode()
 
-def obfuscate_env_file(input_file: str, output_file: str, password: str):
+def generate_file_signature(content: str, key: bytes) -> str:
+    """
+    Generates a signature for the file content using HMAC-SHA256.
+    
+    This signature helps verify file integrity and detect tampering with the obfuscated file.
+    
+    Args:
+        content (str): The content to sign.
+        key (bytes): The key used for signing.
+        
+    Returns:
+        str: Base64-encoded signature.
+    """
+    h = hmac.new(key, content.encode(), hashlib.sha256)
+    return base64.b64encode(h.digest()).decode()
+
+def obfuscate_env_file(input_file: str, output_file: str, password: str, app_key: str):
     """
     Obfuscates the key names and encrypts the values of a .env file.
 
@@ -137,14 +162,16 @@ def obfuscate_env_file(input_file: str, output_file: str, password: str):
         input_file (str): Path to the original .env file.
         output_file (str): Path to save the obfuscated file.
         password (str): Password used to derive encryption key.
+        app_key (str): Application key required for additional security.
 
     Outputs:
         - Encrypted .env file.
         - Mapping JSON file to reverse the obfuscation.
     """
     salt = os.urandom(16)  # Generate a unique salt for key derivation
-    key = generate_key(password, salt)
+    key = generate_key(password, app_key, salt)
     obfuscation_mapping = {}
+    obfuscated_content = ""
 
     with open(input_file, 'r') as file:
         lines = file.readlines()
@@ -159,17 +186,27 @@ def obfuscate_env_file(input_file: str, output_file: str, password: str):
                 encrypted_value = encrypt_value(value, key, key_name)
 
                 obfuscation_mapping[obfuscated_key] = key_name
-                file.write(f"{obfuscated_key}={encrypted_value}\n")
+                output_line = f"{obfuscated_key}={encrypted_value}\n"
+                obfuscated_content += output_line
+                file.write(output_line)
+    
+    # Generate a signature for the obfuscated content
+    file_signature = generate_file_signature(obfuscated_content, key)
 
-    # Save mapping with the salt used for key derivation
+    # Save mapping with the salt used for key derivation and file signature
     mapping_file = f"{output_file}.mapping.json"
     with open(mapping_file, 'w') as file:
-        json.dump({"salt": base64.b64encode(salt).decode(), "mapping": obfuscation_mapping}, file)
+        json.dump({
+            "salt": base64.b64encode(salt).decode(), 
+            "mapping": obfuscation_mapping,
+            "signature": file_signature
+        }, file)
 
     print(f"✅ Obfuscated file saved as: {output_file}")
     print(f"🧩 Mapping file saved as: {mapping_file}")
+    print(f"🔑 File protected with application key and password")
 
-def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, password: str):
+def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, password: str, app_key: str):
     """
     Decrypts and restores the original key-value pairs from an obfuscated .env file.
 
@@ -178,14 +215,26 @@ def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, p
         mapping_file (str): Path to the JSON mapping file.
         output_file (str): Path to save the restored .env file.
         password (str): Password used to derive the encryption key.
+        app_key (str): Application key required for additional security.
     """
     with open(mapping_file, 'r') as file:
         mapping_data = json.load(file)
         salt = base64.b64decode(mapping_data["salt"].encode())
         obfuscation_mapping = mapping_data["mapping"]
+        stored_signature = mapping_data.get("signature")
 
-    key = generate_key(password, salt)
+    key = generate_key(password, app_key, salt)
 
+    # Read and verify file signature if available
+    if stored_signature:
+        with open(input_file, 'r') as file:
+            content = file.read()
+        
+        calculated_signature = generate_file_signature(content, key)
+        if calculated_signature != stored_signature:
+            print("⚠️ WARNING: File signature verification failed. The file may have been tampered with.")
+            print("   Proceeding with decryption, but results may be compromised.")
+    
     with open(input_file, 'r') as file:
         lines = file.readlines()
 
@@ -193,7 +242,12 @@ def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, p
         for line in lines:
             if '=' in line:
                 obfuscated_key, encrypted_value = line.strip().split('=', 1)
-                original_key = obfuscation_mapping[obfuscated_key]
+                original_key = obfuscation_mapping.get(obfuscated_key)
+                
+                if not original_key:
+                    print(f"❌ Unknown key: '{obfuscated_key}' not found in mapping")
+                    file.write(f"# UNKNOWN KEY: {obfuscated_key}\n")
+                    continue
                 
                 try:
                     # Pass the original key name during decryption
@@ -201,9 +255,9 @@ def deobfuscate_env_file(input_file: str, mapping_file: str, output_file: str, p
                     file.write(f"{original_key}={decrypted_value}\n")
                 except Exception as e:
                     print(f"❌ Error decrypting value for key '{original_key}': {str(e)}")
-                    print("   This may indicate tampering with the mapping file.")
+                    print("   This may indicate tampering with the mapping file or incorrect application key.")
                     # Write the error as a comment in the file to indicate the issue
-                    file.write(f"# ERROR decrypting {original_key}: Possible mapping tampering\n")
+                    file.write(f"# ERROR decrypting {original_key}: Possible tampering or wrong app key\n")
 
     print(f"🔓 Deobfuscated file saved as: {output_file}")
 
@@ -215,6 +269,7 @@ def main():
     parser.add_argument("-i", "--input", required=True, help="Input .env file")
     parser.add_argument("-o", "--output", help="Output file name (optional)")
     parser.add_argument("-p", "--password", required=True, help="Password for encryption")
+    parser.add_argument("-a", "--app-key", required=True, help="Application key for additional security")
     parser.add_argument("-d", "--decrypt", action="store_true", help="Enable to decrypt instead of encrypt")
     parser.add_argument("-m", "--mapping", help="Mapping file for decryption (required with -d)")
 
@@ -224,10 +279,10 @@ def main():
         if not args.mapping:
             parser.error("❌ Mapping file is required for decryption.")
         output_file = args.output if args.output else args.input.replace(f".{DEFAULT_OUTPUT_EXTENSION}", "")
-        deobfuscate_env_file(args.input, args.mapping, output_file, args.password)
+        deobfuscate_env_file(args.input, args.mapping, output_file, args.password, args.app_key)
     else:
         output_file = args.output if args.output else f"{args.input}.{DEFAULT_OUTPUT_EXTENSION}"
-        obfuscate_env_file(args.input, output_file, args.password)
+        obfuscate_env_file(args.input, output_file, args.password, args.app_key)
 
 if __name__ == "__main__":
     main()

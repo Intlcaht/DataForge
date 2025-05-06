@@ -1,0 +1,143 @@
+---
+################################################################################
+# Custom Bash Script Execution Playbook
+################################################################################
+# 
+# PURPOSE:
+# This playbook automates the execution of custom bash scripts on target hosts.
+# It handles script transfer, execution permissions, arguments, and output capture.
+# 
+# USAGE:
+# Basic execution:
+#   ansible-playbook -i hosts executor.yml -e "script_path=/local/path/to/script.sh"
+#
+# With arguments:
+#   ansible-playbook -i hosts executor.yml \
+#     -e "script_path=/local/path/to/script.sh" \
+#     -e "script_args='arg1 arg2 arg3'"
+#
+# With specific target group:
+#   ansible-playbook -i hosts executor.yml \
+#     -e "script_path=/local/path/to/script.sh" \
+#     -l kubernetes
+#
+# With environment variables:
+#   ansible-playbook -i hosts executor.yml \
+#     -e "script_path=/local/path/to/script.sh" \
+#     -e '{"script_env": {"DB_HOST": "localhost", "DB_PORT": "5432"}}'
+#
+# NOTES:
+# - The script output is captured and displayed in the playbook output
+# - Script exit code is checked to determine success/failure
+# - Temporary files are cleaned up after execution
+
+- name: Execute Custom Bash Script on Target Hosts
+  hosts: "{{ target_hosts | default('all') }}"
+  become: "{{ become_root | default('yes') }}"
+  vars:
+    # Default script path - can be overridden with -e parameter
+    script_path: "{{ script_path | mandatory }}"
+    
+    # Optional parameters with defaults
+    script_args: "{{ script_args | default('') }}"
+    script_dest: "{{ script_dest | default('/tmp') }}"
+    script_env: "{{ script_env | default({}) }}"
+    script_timeout: "{{ script_timeout | default(300) }}"  # 5 minutes timeout
+    cleanup_script: "{{ cleanup_script | default('yes') }}"
+    
+    # Extract filename from the path
+    script_filename: "{{ script_path | basename }}"
+    remote_script_path: "{{ script_dest }}/{{ script_filename }}"
+    
+  tasks:
+    - name: Validate script path exists locally
+      delegate_to: localhost
+      stat:
+        path: "{{ script_path }}"
+      register: script_stat
+      failed_when: not script_stat.stat.exists
+      run_once: true
+      tags: 
+        - validation
+      # Ensures the script exists locally before attempting to transfer
+
+    - name: Create temporary directory on remote host if it doesn't exist
+      file:
+        path: "{{ script_dest }}"
+        state: directory
+        mode: '0755'
+      tags:
+        - setup
+      # Creates a destination directory for the script if it doesn't exist
+
+    - name: Copy script to remote hosts
+      copy:
+        src: "{{ script_path }}"
+        dest: "{{ remote_script_path }}"
+        mode: '0755'  # Ensure script is executable
+      tags:
+        - transfer
+      # Copies the script to the remote host and makes it executable
+
+    - name: Display script execution information
+      debug:
+        msg: 
+          - "Executing script: {{ script_filename }}"
+          - "Arguments: {{ script_args }}"
+          - "Environment variables: {{ script_env }}"
+      tags:
+        - execute
+      # Provides information about what's being executed for debugging
+
+    - name: Execute the script
+      shell: "{{ remote_script_path }} {{ script_args }}"
+      register: script_output
+      environment: "{{ script_env }}"
+      async: "{{ script_timeout }}"
+      poll: 5  # Check every 5 seconds
+      failed_when: false  # Don't fail here, we'll handle script exit code separately
+      tags:
+        - execute
+      # Executes the script with provided arguments and environment variables
+      # Uses async/poll for timeout handling
+
+    - name: Display script output
+      debug:
+        msg: "{{ script_output.stdout_lines }}"
+      when: script_output.stdout_lines is defined and script_output.stdout_lines | length > 0
+      tags:
+        - output
+      # Shows the standard output from the script execution
+
+    - name: Display script error output
+      debug:
+        msg: "{{ script_output.stderr_lines }}"
+      when: script_output.stderr_lines is defined and script_output.stderr_lines | length > 0
+      tags:
+        - output
+      # Shows any error output from the script execution
+
+    - name: Check script execution status
+      fail:
+        msg: "Script execution failed with exit code {{ script_output.rc }}"
+      when: script_output.rc is defined and script_output.rc != 0
+      tags:
+        - validation
+      # Fails the playbook if the script exited with a non-zero status
+
+    - name: Clean up script from remote host
+      file:
+        path: "{{ remote_script_path }}"
+        state: absent
+      when: cleanup_script | bool
+      tags:
+        - cleanup
+      # Removes the script from the remote host if cleanup is enabled
+
+    - name: Report script execution success
+      debug:
+        msg: "Script {{ script_filename }} executed successfully on {{ inventory_hostname }}"
+      when: script_output.rc is defined and script_output.rc == 0
+      tags:
+        - output
+      # Provides a success message if everything went well

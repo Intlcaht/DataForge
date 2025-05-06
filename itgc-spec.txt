@@ -1,0 +1,197 @@
+📋 Application Specification: ITGC Management Service
+1. ✨ Purpose
+
+A secure internal system for managing ITGC controls:
+
+    Track system access
+
+    Manage user permissions
+
+    Review evidence artifacts
+
+    Monitor change management
+
+    Perform security monitoring
+
+    Generate audit-ready reports
+
+2. 🏛️ Architecture Overview
+Layer	Technology
+Frontend	React 18+, TailwindCSS, React Query
+Backend	FastAPI, SQLAlchemy, PostgreSQL
+Authentication	OAuth2 / SSO + MFA enforcement
+Authorization	RBAC (Role-Based Access Control)
+Notification	Websockets + Email (for alerts)
+Storage	PostgreSQL (core), S3-compatible (artifact storage)
+Logging/Auditing	Structured logs (e.g., Loki, Cloudwatch)
+Deployment	Docker, Kubernetes (optional)
+3. 🔒 Key Security Requirements
+
+    All actions are logged (audit trails).
+
+    MFA enforced for all users.
+
+    Fine-grained RBAC to separate Admin, Reviewer, Read-only users.
+
+    All artifacts (logs, reports, backups) must have versioning and immutability where possible.
+
+    Change Management must enforce approval workflow.
+
+4. 🧩 Core Modules (React + FastAPI APIs)
+Module	Description
+User Management	Invite, onboard, and remove users; manage MFA; assign roles.
+Access Control Review	Track, approve/reject access requests; quarterly review reports.
+Change Management	Submit, review, and approve changes to code, infrastructure, access.
+Security Monitoring	View privileged actions, suspicious logins, alert dashboard.
+Evidence Management	Upload/collect evidence artifacts (backups, logs, reports).
+Audit Reporting	Generate audit logs, export reports in PDF/CSV formats.
+Notifications	Real-time alerts for critical actions (via UI and email).
+Backup & Restore Tests	Manage backup tests, evidence capture for restores.
+Physical Security Logs	Upload/access logs related to physical facilities.
+5. 👨‍💻 User Roles
+Role	Abilities
+Admin	Full access to all modules, user management, settings
+Auditor	Read access to all records, export reports
+Reviewer	Participate in approvals (access, change requests)
+Contributor	Submit change requests, upload artifacts
+Read-only	View data but cannot make changes
+6. 🛤️ Critical User Flows
+6.1 User Management Flow
+
+    Admin logs in → navigates to "User Management"
+
+    Click "Invite User" → enter email, role → user receives invite
+
+    User must enable MFA during first login
+
+    User appears in user table, roles adjustable
+
+    Deactivation option immediately revokes access
+
+6.2 Access Review Flow
+
+    Reviewer clicks "Access Reviews"
+
+    List of users + permissions across systems
+
+    Approve/Reject/Flag permissions
+
+    Signed off access review saved as an artifact (PDF)
+
+6.3 Change Management Flow
+
+    Contributor opens "Change Requests"
+
+    Submit a new change request → description, system impacted, justification
+
+    Reviewer(s) notified
+
+    Reviewer(s) approve/reject
+
+    Final status logged with timestamps
+
+6.4 Evidence Upload Flow
+
+    Contributor opens "Evidence Center"
+
+    Choose category (e.g., Backup Test, Security Logs)
+
+    Upload file or link to existing S3 artifact
+
+    Evidence indexed by control area (e.g., OP-02)
+
+6.5 Security Monitoring Flow
+
+    Reviewer accesses "Security Events"
+
+    Dashboard lists login attempts, privileged commands
+
+    Filters: time range, severity, system
+
+    Can mark events as "Reviewed" or "Flagged for Investigation"
+
+6.6 Audit Reporting Flow
+
+    Auditor clicks "Generate Report"
+
+    Choose scope (e.g., last quarter, specific controls)
+
+    Preview report in dashboard
+
+    Export to PDF/CSV
+
+    Optionally "lock" reports after generation for immutability
+
+7. 🛠️ Backend Services (FastAPI)
+
+    /auth/login
+
+    /auth/mfa
+
+    /users/
+
+    /users/{id}/permissions
+
+    /access_reviews/
+
+    /changes/
+
+    /evidence/
+
+    /security_events/
+
+    /reports/
+
+    /notifications/
+
+    /settings/
+
+All routes protected by OAuth2 + RBAC middleware.
+8. 📦 Database Model Sketch
+
+Tables
+
+    users
+
+    roles
+
+    permissions
+
+    systems
+
+    access_reviews
+
+    change_requests
+
+    security_events
+
+    evidence_files
+
+    audit_logs
+
+    notifications
+
+    settings
+
+(Relational with Foreign Keys; partitioned tables for logs/evidence if necessary)
+9. 📈 Future Enhancements
+
+    Integrate with external SSO (Zitadel)
+
+    Pre-built dashboards for CISO/CIO level views
+
+    Automated quarterly compliance review scheduling
+
+    Real-time security alerts via Slack / Teams integration
+
+    "Smart" anomaly detection on login events (ML module)
+
+✅ This Spec Ensures:
+
+    Full ITGC lifecycle visibility
+
+    Secure, role-driven access
+
+    Compliance audit-readiness
+
+    Extendibility for future governance needs

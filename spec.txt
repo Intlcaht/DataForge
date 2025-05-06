@@ -292,7 +292,7 @@ Log forwarding capabilities
 
 AWS resource provisioning
 GCP resource provisioning
-Azure resource provisioning
+Digital Ocean resource provisioning
 Local environment provisioning (Docker-based)
 
 8. Security Considerations

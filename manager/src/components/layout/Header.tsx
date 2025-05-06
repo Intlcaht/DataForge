@@ -90,11 +90,11 @@ export const useHeaderSlot = (Component) => {
 function Header() {
     const { slot } = useHeaderSlot(undefined)
     return (
-        <header className="bg-white border-b border-gray-200 flex items-center justify-between px-6 py-4">
+        <header className="border-b border-gray-200 flex items-center justify-between px-4 py-2">
             <div className="flex items-center">
                 <h1 className="text-xl font-semibold">BK Management</h1>
                 <div className="ml-4 relative">
-                    <select className="border border-gray-300 rounded px-3 py-1 text-sm pr-8 bg-white">
+                    <select className="border rounded px-3 py-1 text-sm pr-8">
                         <option>Production</option>
                         <option>Development</option>
                         <option>Testing</option>

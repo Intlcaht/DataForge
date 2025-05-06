@@ -1,0 +1,154 @@
+# =========================================
+# 1. Application Runtime Configuration
+# =========================================
+app:
+  name: icaht-admin-data_forj
+  environment: development  # development | staging | production
+  log_level: INFO           # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  base_path: /api
+  cors:
+    allowed_origins:
+      - https://admin.dev.localhost.com
+      - https://admin.localhost.com
+    allow_credentials: true
+
+# =========================================
+# 2. Deployment Environment Profiles
+# =========================================
+profiles:
+  development:
+    terraform:
+      state_backend: s3://tf-state/dev
+    ansible:
+      inventory_path: inventories/dev
+    python:
+      script_root: scripts/dev
+  staging:
+    terraform:
+      state_backend: s3://tf-state/staging
+    ansible:
+      inventory_path: inventories/staging
+    python:
+      script_root: scripts/staging
+  production:
+    terraform:
+      state_backend: s3://tf-state/prod
+    ansible:
+      inventory_path: inventories/prod
+    python:
+      script_root: scripts/prod
+
+# =========================================
+# 3. Infrastructure Stack Settings
+# =========================================
+infrastructure:
+  terraform:
+    binary: /usr/local/bin/terraform
+    version: "1.6.2"
+    enforce_validation: true
+  ansible:
+    binary: /usr/bin/ansible-playbook
+    vault_password_file: /secrets/ansible_vault_pass
+  kestra:
+    api_endpoint: https://kestra.internal.localhost.com
+    namespace: internal.localhost.workflow
+  semaphore:
+    api_endpoint: https://semaphore.internal.localhost.com
+    access_token: ${SEMAPHORE_TOKEN}
+
+# =========================================
+# 4. Authentication & Identity Management
+# =========================================
+security:
+  authentication:
+    method: sso
+    sso:
+      provider: zitadel
+      issuer: https://auth.localhost.com
+      client_id: ${ZITADEL_CLIENT_ID}
+      client_secret: ${ZITADEL_CLIENT_SECRET}
+      redirect_uri: https://admin.localhost.com/auth/callback
+      scopes:
+        - openid
+        - profile
+        - email
+      discovery_url: https://auth.localhost.com/.well-known/openid-configuration
+  multi_factor_authentication:
+    enabled: true
+    mechanism: totp
+    issuer_label: internal-admin-tool
+  session_management:
+    idle_timeout_minutes: 30
+    sliding_refresh_minutes: 5
+
+# =========================================
+# 5. Access Control & Role Management
+# =========================================
+access_control:
+  roles:
+    administrator:
+      permissions:
+        - read
+        - write
+        - deploy
+        - manage_users
+    operator:
+      permissions:
+        - read
+        - deploy
+    auditor:
+      permissions:
+        - read
+
+# =========================================
+# 6. Feature Flags & Capability Toggles
+# =========================================
+features:
+  ui:
+    terraform_dashboard: true
+    kestra_workflow_editor: false
+  system:
+    enable_playbook_logs: true
+    restrict_environment_changes: false
+
+# =========================================
+# 7. Observability & Telemetry
+# =========================================
+observability:
+  logging:
+    provider: loki
+    severity_threshold: INFO
+    file_output: /var/log/admin-tool.log
+  metrics:
+    enabled: true
+    provider: prometheus
+    scrape_path: /metrics
+
+# =========================================
+# 8. Containerization & Host Runtime
+# =========================================
+runtime:
+  volumes:
+    scripts: /mnt/scripts
+    secrets: /mnt/secrets
+  timezone: UTC
+  restart_policy: on-failure
+
+# =========================================
+# 9. API Rate Limiting & QoS Controls
+# =========================================
+rate_limiting:
+  enabled: true
+  requests_per_minute: 100
+  burst_capacity: 20
+
+# =========================================
+# 10. Notification Channels
+# =========================================
+notifications:
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_WEBHOOK}
+    events:
+      - deployment_failed
+      - high_resource_utilization

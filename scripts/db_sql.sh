@@ -29,12 +29,12 @@
 #   -q  SQL query (with -q command)
 # 
 # Examples:
-#   Initialize PostgreSQL DB: sql_tool.sh -i -d mydb -t postgres
+#   Initialize PostgreSQL DB: sql_tool.sh -i -d db -t postgres
 #   Create MySQL user:        sql_tool.sh -u -n user -p pass -t mysql
-#   Run SQLite script:        sql_tool.sh -r -d mydb -f script.sql -t sqlite
-#   Import CSV to SQLite:     sql_tool.sh -m -d mydb -T table -f data.csv -t sqlite
-#   Backup MySQL DB:          sql_tool.sh -b -d mydb -t mysql
-#   Show PostgreSQL schema:   sql_tool.sh -v -d mydb -T table -t postgres
+#   Run SQLite script:        sql_tool.sh -r -d db -f script.sql -t sqlite
+#   Import CSV to SQLite:     sql_tool.sh -m -d db -T table -f data.csv -t sqlite
+#   Backup MySQL DB:          sql_tool.sh -b -d db -t mysql
+#   Show PostgreSQL schema:   sql_tool.sh -v -d db -T table -t postgres
 
 # Initialize variables
 command=; dbname=; dbtype=; username=; password=; file=; table=; query=

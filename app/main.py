@@ -70,19 +70,19 @@ def init():
     config = load_config(config_file=config_file)
     # Return the loaded configuration for use by other parts of the application
 
-    # Examples of using the controller
-    # result1 = local_db_controller.initialize_stack("SecurePassword123")
-    result2 = local_db_controller.start_service(DatabaseService.POSTGRES)
-    result3 = local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
-    # result4 = local_db_controller.backup_all_databases()
+    # # Examples of using the controller
+    # # result1 = local_db_controller.initialize_stack("SecurePassword123")
+    # result2 = local_db_controller.start_service(DatabaseService.POSTGRES)
+    # result3 = local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
+    # # result4 = local_db_controller.backup_all_databases()
     
-    print("Results:", result2, result3)
-    # Provision databases using the default config
-    success = db_mng_control.provision_databases(config_file=config_file)
-    print(f"Provision result: {success}")
-
-    # env_obfuscator.obfuscate(".env", "password6789hjk", ".env.keyd")
-    # env_obfuscator.deobfuscate(".env.keyd", ".env.keyd.mapping.json", "password6789hjk")
+    # print("Results:", result2, result3)
+    # # Provision databases using the default config
+    # success = db_mng_control.provision_databases(config_file=config_file)
+    # print(f"Provision result: {success}")
+    
+    # env_obfuscator.obfuscate(".env", "password6789hjk", "key", ".env.keyd")
+    # env_obfuscator.deobfuscate(".env.keyd", ".env.keyd.mapping.json", "password6789hjk", "key")
    
 
 def serve():

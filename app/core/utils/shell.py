@@ -191,7 +191,8 @@ def prepare_command_for_shell(
                     )
                     shell_type = 'wsl' if result.returncode == 0 else 'cmd'
                 except (subprocess.SubprocessError, FileNotFoundError):
-                    shell_type = 'cmd'
+                    pass
+                    # shell_type = 'cmd'
         else:
             shell_type = 'bash' if os.path.exists("/bin/bash") or os.path.exists("/usr/bin/bash") else 'sh'
 

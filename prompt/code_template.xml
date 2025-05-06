@@ -1,0 +1,64 @@
+<CodingTaskPrompt>
+  <TaskSummary>
+    <!-- Briefly describe what the code should do -->
+    Build a function to paginate a list of products with optional sorting and filtering.
+  </TaskSummary>
+
+  <RequirementsAndConstraints>
+    <Language>Python</Language>
+    <DesignPattern>RepositoryPattern</DesignPattern>
+    <MustSupport>
+      <Feature>Pagination</Feature>
+      <Feature>Sorting</Feature>
+      <Feature>Filtering</Feature>
+    </MustSupport>
+    <Avoid>
+      <AntiPattern>GlobalState</AntiPattern>
+      <AntiPattern>ExcessiveNesting</AntiPattern>
+    </Avoid>
+    <TargetPlatform>BackendAPI</TargetPlatform>
+  </RequirementsAndConstraints>
+
+  <IO>
+    <Input>
+      <Example>
+        {
+          "items": [...],
+          "page": 2,
+          "limit": 10
+        }
+      </Example>
+    </Input>
+    <Output>
+      <Example>
+        {
+          "data": [...],
+          "total": 50,
+          "page": 2,
+          "pages": 5
+        }
+      </Example>
+    </Output>
+  </IO>
+
+  <SpecialConsiderations>
+    <Consideration>Handle empty or null input gracefully</Consideration>
+    <Consideration>Optimize for large datasets (10,000+ records)</Consideration>
+    <Consideration>Sorting must be case-insensitive</Consideration>
+    <Consideration>Use timezone-aware date operations</Consideration>
+  </SpecialConsiderations>
+
+  <SuccessCriteria>
+    <Criterion>Unit-tested with at least 90% coverage</Criterion>
+    <Criterion>Code is modular, readable, and reusable</Criterion>
+    <Criterion>Uses industry-standard naming and formatting</Criterion>
+    <Criterion>No hardcoded values, use config/constants</Criterion>
+  </SuccessCriteria>
+
+  <OptionalExtras>
+    <Extra>Include comments and documentation</Extra>
+    <Extra>Provide sample usage / test cases</Extra>
+    <Extra>Return errors with proper codes/messages</Extra>
+    <Extra>Include optional performance benchmark</Extra>
+  </OptionalExtras>
+</CodingTaskPrompt>

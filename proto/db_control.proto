@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package dbcontrol;
+package dbControl;
 
 service DBControlService {
   rpc GetStatus(DBIdentifier) returns (DBStatus);

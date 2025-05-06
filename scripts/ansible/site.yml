@@ -1,0 +1,212 @@
+---
+################################################################################
+# Server Security Hardening and Setup Playbook
+################################################################################
+# 
+# PURPOSE:
+# This playbook automates the setup of a secure Linux server with Docker capabilities.
+# It configures a non-root user with sudo access, hardens SSH, installs essential
+# tools, and sets up Docker with appropriate permissions.
+#
+# EXECUTION:
+# Run with: ansible-playbook -i hosts site.yml
+#
+# REQUIREMENTS:
+# - Target hosts must be accessible with initial SSH credentials
+# - Public key file must exist at the specified location
+# - Target hosts must be Debian/Ubuntu-based systems
+#
+# SECURITY CONSIDERATIONS:
+# - SSH root login is disabled
+# - Password authentication is disabled (key-only access)
+# - Custom SSH port for added security
+# - UFW firewall configured to protect the server
+# - Least privilege principle applied to user permissions
+
+- name: Server Setup and Security Hardening
+  hosts: all
+  become: yes  # Use sudo for all tasks (requires initial sudo access)
+  vars:
+    # User configuration
+    user_name: g33k  # Non-root user to be created for server administration
+    ssh_port: 2222   # Non-standard SSH port for enhanced security
+    public_key_file: files/id_rsa.pub  # Path to public SSH key for authentication
+
+  tasks:
+    # SYSTEM UPDATES AND PACKAGE INSTALLATION
+    # =======================================================================
+    
+    - name: Ensure apt cache is updated
+      apt:
+        update_cache: yes
+      tags:
+        - system
+        - packages
+      # Updates package indexes to ensure latest versions are available
+      
+    - name: Install basic utility packages
+      apt:
+        name:
+          - wget   # Network file retrieval utility
+          - curl   # Command-line tool for transferring data
+          - zellij # Terminal workspace with multiplexing capabilities
+        state: present
+      tags:
+        - system
+        - packages
+      # Installs essential command-line utilities for system administration
+      
+    # SSH SERVER CONFIGURATION
+    # =======================================================================
+    
+    - name: Install OpenSSH server
+      apt:
+        name: openssh-server
+        state: present
+      tags:
+        - ssh
+        - security
+      # Ensures SSH server is installed for secure remote administration
+      
+    # DOCKER INSTALLATION AND CONFIGURATION
+    # =======================================================================
+    
+    - name: Install Docker dependencies
+      apt:
+        name:
+          - apt-transport-https  # Enables HTTPS for apt repositories
+          - ca-certificates      # Common CA certificates for SSL
+          - gnupg                # GNU privacy guard for encryption and signing
+          - lsb-release          # Linux Standard Base utilities
+        state: present
+      tags:
+        - docker
+      # Installs prerequisites needed for Docker repository access and installation
+      
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags:
+        - docker
+      # Adds Docker's official GPG key to verify repository integrity
+      
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      tags:
+        - docker
+      # Adds Docker's official repository based on the Ubuntu release version
+      
+    - name: Install Docker and Docker Compose
+      apt:
+        name:
+          - docker-ce            # Docker Community Edition engine
+          - docker-ce-cli        # Docker command-line interface
+          - containerd.io        # Container runtime
+          - docker-compose-plugin # Compose plugin for multi-container applications
+        state: present
+      tags:
+        - docker
+      # Installs Docker engine and related components
+      
+    - name: Ensure Docker is started and enabled at boot
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      tags:
+        - docker
+      # Starts Docker service and configures it to start automatically after reboot
+      
+    # USER MANAGEMENT
+    # =======================================================================
+    
+    - name: Add a new administrator user
+      user:
+        name: "{{ user_name }}"  # Username defined in variables
+        groups: sudo             # Add to sudo group for administrative privileges
+        append: yes              # Keep existing group memberships
+        shell: /bin/zellij         # Set Zellij as default shell
+        create_home: yes         # Create home directory
+      tags:
+        - user
+        - security
+      # Creates a non-root user with sudo permissions for server administration
+      
+    - name: Add user to Docker group
+      user:
+        name: "{{ user_name }}"
+        groups: docker           # Docker group allows running docker commands without sudo
+        append: yes              # Preserve existing group memberships
+      tags:
+        - user
+        - docker
+      # Allows the user to run Docker commands without sudo (security consideration)
+      
+    - name: Set up SSH key for new user
+      authorized_key:
+        user: "{{ user_name }}"
+        state: present
+        key: "{{ lookup('file', public_key_file) }}"
+      tags:
+        - user
+        - ssh
+        - security
+      # Adds SSH public key for passwordless authentication
+      
+    # SSH HARDENING
+    # =======================================================================
+    
+    - name: Configure SSHD for enhanced security
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        create: no               # Do not create file if it doesn't exist
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "Port {{ ssh_port }}"                      # Change default SSH port
+        - "PermitRootLogin no"                       # Prevent direct root login
+        - "PasswordAuthentication no"                # Disable password authentication
+        - "ChallengeResponseAuthentication no"       # Disable challenge-response authentication
+        - "UsePAM yes"                               # Enable PAM for authentication
+        - "AllowUsers {{ user_name }}"               # Only allow specified user to connect
+        - "PubkeyAuthentication yes"                 # Enable public key authentication
+        - "AuthorizedKeysFile .ssh/authorized_keys"  # Path to authorized keys file
+      tags:
+        - ssh
+        - security
+      # Hardens SSH configuration to prevent unauthorized access
+      
+    # FIREWALL CONFIGURATION
+    # =======================================================================
+    
+    - name: Ensure UFW allows new SSH port
+      ufw:
+        rule: allow
+        port: "{{ ssh_port }}"
+        proto: tcp
+      tags:
+        - firewall
+        - security
+      # Opens custom SSH port in firewall to maintain remote access
+      
+    - name: Disable default SSH port 22
+      ufw:
+        rule: deny
+        port: 22
+        proto: tcp
+      tags:
+        - firewall
+        - security
+      # Blocks default SSH port to prevent scanning attacks
+      
+    - name: Restart SSHD to apply changes
+      service:
+        name: ssh
+        state: restarted
+      tags:
+        - ssh
+        - security
+      # Applies SSH configuration changes without requiring a full system reboot

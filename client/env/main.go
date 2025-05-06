@@ -25,7 +25,7 @@ import (
 // - `--api-url <string>`          : (Optional) Custom base URL for the API. Default is `https://api.environment.example.com/v1`.
 // - `--timeout <int>`             : (Optional) Request timeout in seconds. Default is 30.
 //
-// ## 🧪 Usage Examples:
+// ## 🧪 Usage:
 //
 // ### ▶️ Basic usage (download environment):
 // ```bash

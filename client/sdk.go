@@ -46,7 +46,7 @@ func main() {
 		CPUCores:    1,
 		Replicas:    1,
 		AdminUser:   "admin",
-		DatabaseName: "myapp",
+		DatabaseName: "db",
 		Extensions:  []string{"pgcrypto", "uuid-ossp"},
 	}
 
@@ -109,16 +109,18 @@ func main() {
 	fmt.Printf("Use SSL: %t\n", connInfo.SSL)
 
 	// Upload and obfuscate an environment file
-	envFile := []byte(`
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=admin
-DB_PASSWORD=my-secure-password
-DB_NAME=myapp
-`)
+	envFile := []byte(
+		`
+		DB_HOST=localhost
+		DB_PORT=5432
+		DB_USER=admin
+		DB_PASSWORD=my-secure-password
+		DB_NAME=db
+		`
+	)
 
 	obfuscatedFile, err := client.EnvFiles.Obfuscate(ctx, &rds.EnvFileObfuscateRequest{
-		Name:       "myapp.env",
+		Name:       "db.env",
 		Content:    envFile,
 		ResourceID: newResource.ID,
 	})

@@ -11,34 +11,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger('db_manager')
 
-# Configuration Functions
-def load_config(config_file: str) -> Dict:
-    """
-    Load configuration from YAML file.
-    
-    Args:
-        config_file: Path to the YAML configuration file
-        
-    Returns:
-        Dict containing the configuration
-    """
-    try:
-        if not os.path.exists(config_file):
-            logger.error(f"Configuration file not found: {config_file}")
-            sys.exit(1)
-            
-        with open(config_file, 'r') as file:
-            config = yaml.safe_load(file)
-        
-        logger.info(f"Configuration loaded from {config_file}")
-        return config
-    except yaml.YAMLError as e:
-        logger.error(f"Error parsing YAML configuration: {e}")
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
-        sys.exit(1)
-
 # Database System Detection Functions
 def get_supported_db_engines(config: Dict) -> List[str]:
     """

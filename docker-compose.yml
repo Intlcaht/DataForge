@@ -1,11 +1,58 @@
-version: '3.9'
-
 services:
-  python-grpc:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: app_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  manager:
     build:
       context: .
-      dockerfile: Dockerfile.server
-    # container_name: python-grpc
+      dockerfile: Dockerfile.manager
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://api
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/app_db
+      ZITADEL_CLIENT_ID: your-client-id
+      ZITADEL_CLIENT_SECRET: your-client-secret
+      ZITADEL_ISSUER_URL: https://auth.localhost.com
+      ENVIRONMENT: development
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  app-grpc:
+    build:
+    context: .
+    dockerfile: Dockerfile.server
     volumes:
       - ./proto.pb:/proto.pb
     ports:
@@ -13,9 +60,121 @@ services:
 
   envoy:
     image: envoyproxy/envoy:v1.29-latest
-    # container_name: envoy
     volumes:
       - ./manager/envoy.yml:/etc/envoy/envoy.yaml:ro
       - ./proto.pb:/etc/envoy/proto.pb:ro
     ports:
       - "8080:8080"
+
+  kestra:
+    image: kestra/kestra:latest
+    pull_policy: always
+    # Note that this setup with a root user is intended for development purpose.
+    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
+    user: "root"
+    command: server standalone
+    volumes:
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+    KESTRA_CONFIGURATION: |
+      datasources:
+      postgres:
+          url: jdbc:postgresql://postgres:5432/kestra
+          driverClassName: org.postgresql.Driver
+          username: kestra
+          password: k3str4
+      kestra:
+      server:
+          basicAuth:
+          enabled: false
+          username: "admin@localhost.dev" # it must be a valid email address
+          password: kestra
+      repository:
+          type: postgres
+      storage:
+          type: local
+          local:
+          basePath: "/app/storage"
+      queue:
+          type: postgres
+      tasks:
+          tmpDir:
+          path: /tmp/kestra-wd/tmp
+      url: http://localhost:8080/
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+    postgres:
+      condition: service_started
+
+  semaphore_db:
+    image: mysql:8
+    environment:
+      MYSQL_USER: semaphore
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: semaphore
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+    volumes:
+      - semaphore_mysql:/var/lib/mysql
+    networks:
+      - semaphore_network
+
+  semaphore-runner:
+    image: semaphoreui/runner:v2.14.8
+    environment:
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /var/lib/semaphore/runner.key
+      SEMAPHORE_WEB_ROOT: http://semaphore:3000
+      SEMAPHORE_RUNNER_TOKEN: evlUL554N90ySrx0c10OiKSe4gQLOAKha+5g02Jd3vc=
+    volumes:
+      - semaphore_data:/var/lib/semaphore
+      - semaphore_config:/etc/semaphore
+      - semaphore_tmp:/tmp/semaphore
+
+  semaphore:
+    ports:
+      - 3000:3000
+    depends_on:
+      - semaphore_db
+    image: semaphoreui/semaphore:v2.14.8
+    environment:
+      SEMAPHORE_DB_DIALECT: mysql
+      SEMAPHORE_DB_HOST: semaphore_db
+      SEMAPHORE_DB_NAME: semaphore
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: password
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: password
+      SEMAPHORE_ADMIN_NAME: Admin
+      SEMAPHORE_ADMIN_EMAIL: admin@localhost
+      SEMAPHORE_USE_REMOTE_RUNNER: "True"
+      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: "evlUL554N90ySrx0c10OiKSe4gQLOAKha+5g02Jd3vc="
+      SEMAPHORE_COOKIE_HASH: "hash"
+      SEMAPHORE_COOKIE_ENCRYPTION: "encryption"
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: "key_encryption"
+      SEMAPHORE_TOTP_ENABLED: "True"
+      SEMAPHORE_GOTIFY_ALERT: "True"
+      SEMAPHORE_GOTIFY_URL: "http://gotify"
+      SEMAPHORE_GOTIFY_TOKEN: "gotify_token"
+    volumes:
+      - semaphore_data:/var/lib/semaphore
+      - semaphore_config:/etc/semaphore
+      - semaphore_tmp:/tmp/semaphore
+    networks:
+      - semaphore_network
+
+volumes:
+  semaphore_data:
+  semaphore_config:
+  semaphore_tmp:
+  semaphore_mysql:
+  pg_data:
+  postgres-data:
+    driver: local
+  kestra-data:
+    driver: local
+
+networks:
+  semaphore_network: { driver: "bridge" }
