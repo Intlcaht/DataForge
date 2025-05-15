@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential
 
 # Install pip tools
-COPY ./app/pyproject.toml poetry.lock ./
+COPY ./app/src/pyproject.toml poetry.lock ./
 RUN pip install poetry && poetry export -f requirements.txt --without-hashes > requirements.txt
 
 # Install app dependencies
@@ -16,7 +16,7 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy source code
-COPY ./app/. .
+COPY ./app/src/. .
 
 # Stage 2: Runtime
 FROM python:alpine
