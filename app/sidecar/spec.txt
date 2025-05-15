@@ -1,0 +1,148 @@
+# 🚀 **Icaht Sidecar** - The Enriched Proxy for Icaht Microservices
+
+The **Icaht Sidecar** is a lightweight and flexible proxy solution for microservices environments. It enables fine-grained, enriched proxies for each registered service in the system. The sidecar ensures secure, observable, and scalable communication between microservices by exposing service-specific proxies with built-in features such as authentication, authorization, metrics, tracing, logging, and more.
+
+---
+
+## 🌟 **Overview**
+
+The **Icaht Sidecar** allows each microservice to register itself with the sidecar. Once enrolled, the sidecar will provide an **isolated proxy** for each service that runs on a unique port, enabling Traefik or any other edge proxy to route traffic to the appropriate service proxy. These proxies come with various **enrichment features** such as:
+
+* Authentication & Authorization
+* Distributed Tracing
+* Request ID Injection
+* Health Monitoring
+* Metrics Collection
+* Logging
+* Rate Limiting (optional)
+
+This approach helps to offload common tasks from the microservices themselves, centralizing concerns such as observability, security, and traffic management.
+
+---
+
+## 🎯 **Key Features**
+
+### 1. **Service Registration and Enrollment**
+
+Each microservice in the cluster can **register** with the **Icaht Sidecar**, providing metadata such as:
+
+* Service Name
+* Version
+* Endpoint Definitions
+
+Once registered, the sidecar will create a **separate proxy** for the service with its own unique configuration and port.
+
+### 2. **Independent Proxies for Each Service**
+
+* **Unique Proxy per Service**: Each service gets a dedicated proxy, listening on its own port, and can be enriched with the necessary features.
+* **Dynamic Port Allocation**: The sidecar assigns a unique port for each service proxy automatically.
+
+  Example:
+
+  * Service A → Proxy on port `7001`
+  * Service B → Proxy on port `7002`
+* **Traefik Integration**: The sidecar is designed to work seamlessly with **Traefik**, allowing it to discover and route traffic to individual service proxies.
+
+### 3. **Proxy Enrichment Features**
+
+The proxies provided by the sidecar come with built-in **enrichment features**, each designed to improve the observability, security, and scalability of your services:
+
+| Feature                            | Description                                                                                  |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Authentication & Authorization** | Validates incoming requests using JWT or other authentication methods and checks permissions |
+| **Metrics Exporter**               | Exposes Prometheus-compatible metrics (e.g., request count, latency, etc.) for each service  |
+| **Distributed Tracing**            | Supports tracing protocols like OpenTelemetry or Zipkin for cross-service tracing            |
+| **Request ID Injection**           | Automatically injects unique request IDs into each request for traceability                  |
+| **Health Checks**                  | Exposes health check endpoints (e.g., `/health`, `/ready`) for each service     |
+| **CORS Management**                | Provides CORS configuration for services requiring cross-origin requests                     |
+| **Logging**                        | Logs requests and responses, enhancing observability with user, service, and request context |
+| **Service Discovery**              | Registers services with internal service registry for dynamic routing and communication      |
+| **Custom Middleware Support**      | Supports the injection of custom middlewares to handle specific service requirements         |
+
+### 4. **Proxy Lifecycle Management**
+
+The **Icaht Sidecar** takes care of:
+
+* **Service Registration**: Services register via API or config files.
+* **Dynamic Proxy Startup**: A proxy is started for each service as soon as it is registered.
+* **Dynamic Port Mapping**: Each service is assigned a unique port.
+* **Shutdown**: On deregistration or service failure, the sidecar stops and cleans up the associated proxy.
+
+### 5. **Health Monitoring and Metrics**
+
+Each service proxy is monitored for health and performance:
+
+* **Health Endpoints**: Proxies expose `/health` and `/ready` endpoints to indicate their health.
+* **Metrics Collection**: Prometheus-compatible metrics (e.g., request counts, error rates) are collected and exported from each proxy.
+* **Logging and Alerts**: Centralized logs are generated and can be integrated with logging systems like ELK or Fluentd.
+
+### 6. **Integration with Traefik**
+
+* The **Icaht Sidecar** registers each service's proxy dynamically with **Traefik** or any similar edge proxy.
+* Each proxy exposes a **unique route** to its respective service, and Traefik can route traffic based on service metadata.
+
+Example configuration for Traefik:
+
+```toml
+[http.services]
+  [http.services.auth-service.loadBalancer]
+    [[http.services.auth-service.loadBalancer.servers]]
+      url = "http://localhost:7001"
+
+  [http.services.api-service.loadBalancer]
+    [[http.services.api-service.loadBalancer.servers]]
+      url = "http://localhost:7002"
+```
+
+---
+
+## 🧩 **Package Breakdown**
+
+The **Icaht Sidecar** is organized into several sub-packages that enable modular development and maintenance. Here’s a breakdown of the sub-packages:
+
+| Sub-Package           | Description                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| **core**              | Core logic of the sidecar that manages proxy registration, port assignment, and lifecycle |
+| **auth**              | Handles authentication and authorization (JWT validation, token management)               |
+| **metrics**           | Exposes Prometheus-compatible metrics and integrates with monitoring systems              |
+| **tracing**           | Implements distributed tracing (OpenTelemetry, Zipkin) for cross-service tracing          |
+| **requestid**         | Manages unique request ID generation and injection into service requests                  |
+| **health**            | Implements health checks and readiness checks for each service proxy                      |
+| **logging**           | Centralized logging system for service interactions, error tracking, and request logs     |
+| **rate-limiting**     | Implements request rate limiting (optional, can be controlled externally)                 |
+| **caching**           | Implements caching logic for service responses to optimize performance                    |
+| **service-discovery** | Manages service registration and dynamic discovery for routing purposes                   |
+| **proxy**             | Configures the proxy for each service, handles port assignments and proxy settings        |
+| **middleware**        | Implements customizable middlewares that can be applied to any service proxy              |
+| **configuration**     | Manages the dynamic configuration loading for proxy settings and service metadata         |
+
+---
+
+## 📦 **Plugin System (Optional)**
+
+The **Icaht Sidecar** supports an **extensible plugin system**. New features or capabilities can be added by implementing plugins that integrate with the sidecar core. These plugins can be loaded dynamically, providing the ability to:
+
+* Add new middlewares
+* Extend the health check system
+* Implement custom logging formats
+* Integrate with third-party services (e.g., payment gateways, message brokers)
+
+---
+
+## 🚀 **Getting Started**
+
+1. **Service Registration**: Services can register themselves with the sidecar using a simple HTTP API or configuration files.
+2. **Traefik Integration**: The sidecar communicates with Traefik, dynamically registering routes for each proxy.
+3. **Enrich Proxies**: Configure proxies to include authentication, tracing, health checks, and more.
+4. **Deploy**: Once the services are registered, the sidecar will manage proxy lifecycle and routing automatically.
+
+---
+
+## 🧱 **Summary**
+
+The **Icaht Sidecar** is an essential tool for managing communication in microservices environments. By providing a separate, enriched proxy for each service, it simplifies common tasks such as authentication, observability, rate limiting, and service discovery. Integrated with Traefik, it ensures that traffic flows seamlessly through the system while providing insights and control over each service.
+
+* **Enriched Proxies**: Add authentication, tracing, health checks, and more for each service.
+* **Dynamic Service Registration**: Automatically register and discover services without downtime.
+* **Scalable and Secure**: Isolate proxies for each service and manage them centrally with ease.
+

@@ -96,6 +96,7 @@
         "unpadder",
         "urandom",
         "VARCHAR",
+        "Zipkin",
         "zoneinfo"
     ],
     "makefile.configureOnOpen": false

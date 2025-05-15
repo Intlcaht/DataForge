@@ -141,3 +141,24 @@
       tags:
         - output
       # Provides a success message if everything went well
+
+# Playbook Features
+# The custom script execution playbook includes:
+
+# Comprehensive Documentation: Detailed usage examples and explanations
+# Flexible Script Handling:
+
+# Transfers scripts to target hosts
+# Makes scripts executable
+# Handles script arguments
+# Sets custom environment variables
+# Captures and displays output
+
+
+# Error Handling: Checks script exit codes and fails appropriately
+# Configurable Options:
+
+# Target specific host groups
+# Set timeouts for long-running scripts
+# Control cleanup behavior
+# Define script destination

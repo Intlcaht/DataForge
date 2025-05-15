@@ -1,0 +1,42 @@
+{
+    "name": "icaht/sidecar_agent",
+    "description": "",
+    "keywords": [
+        "icaht",
+        "sidecar_agent"
+    ],
+    "homepage": "https://github.com/intlcaht/sidecar_agent",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Peter Vincent",
+            "email": "dev4vin@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Icaht\\SidecarAgent\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Icaht\\SidecarAgent\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
