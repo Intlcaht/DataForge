@@ -17,6 +17,7 @@ RUN pip install -r requirements.txt
 
 # Copy source code
 COPY ./app/src/. .
+COPY ./app/main.py .
 
 # Stage 2: Runtime
 FROM python:alpine

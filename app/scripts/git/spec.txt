@@ -23,7 +23,7 @@ Initialize git-flow branching model
 Set up standard branches:
 
 main (production-ready code)
-develop (integration branch)
+dev (integration branch)
 feature/* prefix for new features
 release/* prefix for release preparation
 hotfix/* prefix for urgent fixes

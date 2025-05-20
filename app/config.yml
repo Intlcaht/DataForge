@@ -21,22 +21,16 @@ profiles:
       state_backend: s3://tf-state/dev
     ansible:
       inventory_path: inventories/dev
-    python:
-      script_root: scripts/dev
   staging:
     terraform:
       state_backend: s3://tf-state/staging
     ansible:
       inventory_path: inventories/staging
-    python:
-      script_root: scripts/staging
   production:
     terraform:
       state_backend: s3://tf-state/prod
     ansible:
       inventory_path: inventories/prod
-    python:
-      script_root: scripts/prod
 
 # =========================================
 # 3. Infrastructure Stack Settings

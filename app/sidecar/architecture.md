@@ -1,6 +1,5 @@
-## Modified Icaht Sidecar Architecture
+## Icaht Sidecar Architecture
 
-Given that Traefik will handle CORS, caching, rate limiting, and logging, and the services will manage their own logging, the Icaht Sidecar's enrichment features will primarily focus on authentication, authorization, metrics, tracing, request ID injection, and health checks. The authentication logic will also be tailored to Authentik for normal users and Zitadel for admins and employees.
 
 ```txt
 +---------------------+     +---------------------+     +---------------------+
@@ -40,7 +39,7 @@ Given that Traefik will handle CORS, caching, rate limiting, and logging, and th
                           +---------------------+
 ```
 
-## Modified File Descriptions and Functions
+## File Descriptions and Functions
 
 Here's an updated breakdown of the purpose and functions of each file, reflecting the removal of certain features and the specific authentication requirements:
 

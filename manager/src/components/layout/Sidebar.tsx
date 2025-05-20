@@ -44,6 +44,8 @@ function Sidebar() {
     ]
   }
 
+  // const groups = [ menu, system ]
+
   return (
     <UISidebar>
       <SidebarHeader >
@@ -52,6 +54,25 @@ function Sidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
+        {/* {groups.map((grp, i) => (
+          <SidebarGroup key={i}>
+          <SidebarGroupLabel>{grp}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {grp.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        ))} */}
         <SidebarGroup >
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>

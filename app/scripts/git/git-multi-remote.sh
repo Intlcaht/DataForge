@@ -135,9 +135,11 @@ initialize_repository() {
 
 # Configure remotes
 configure_remotes() {
-    # Add public remote
-    log "Adding public remote (origin): $PUBLIC_REMOTE_URL"
-    git remote add origin "$PUBLIC_REMOTE_URL" || { error "Failed to add public remote"; exit 1; }
+    # Add public remote if specified
+    if [ -n "$PUBLIC_REMOTE_URL" ]; then
+        log "Adding public remote (origin): $PUBLIC_REMOTE_URL"
+        git remote add public "$PUBLIC_REMOTE_URL" || { error "Failed to add public remote"; exit 1; }
+    fi
     
     # Add private remote if specified
     if [ -n "$PRIVATE_REMOTE_URL" ]; then
@@ -199,7 +201,12 @@ Thumbs.db
 .classpath
 *.swp
 *.swo
-
+.env
+.env.test
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 # Log Files
 *.log
 logs/
@@ -253,12 +260,7 @@ yarn-error.log*
 .yarn-integrity
 coverage/
 .nyc_output
-.env
-.env.test
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
 EOL
                 ;;
                 
@@ -294,7 +296,7 @@ initialize_git_flow() {
     log "Initializing git flow pattern"
     
     # Create develop branch
-    git checkout -b develop main || { error "Failed to create develop branch"; exit 1; }
+    git checkout -b dev main || { error "Failed to create develop branch"; exit 1; }
     
     # Create the initial structure for git flow branches
     mkdir -p .git/refs/heads/$FEATURE_PREFIX
@@ -303,7 +305,7 @@ initialize_git_flow() {
     
     # Create a config file for git flow
     git config --local gitflow.branch.master main
-    git config --local gitflow.branch.develop develop
+    git config --local gitflow.branch.develop dev
     git config --local gitflow.prefix.feature "$FEATURE_PREFIX/"
     git config --local gitflow.prefix.release "$RELEASE_PREFIX/"
     git config --local gitflow.prefix.hotfix "$HOTFIX_PREFIX/"
@@ -407,7 +409,7 @@ main() {
     
     success "Setup complete! Repository is ready for use."
     log "Main branch: main"
-    log "Development branch: develop"
+    log "Development branch: dev"
     log "Current branch: $(git branch --show-current)"
     
     # Display configured remotes

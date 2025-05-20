@@ -102,11 +102,11 @@ kasm_version=1.14.0
 kasm_port=443
 kasm_db_type=postgres
 kasm_memory_min=4G
-kasm_domain=workspace.localhost.com
+kasm_domain=kasm.localhost.com
 
 [development:vars]
 # Development server specific variables
-dev_tools=["git", "docker", "php", "python", "nodejs", "go"]
+dev_tools=["git", "docker", "php", "python", "nodejs", "go", "java"]
 gitlab_runner_enabled=true
 sonarqube_enabled=true
 dev_user_extra_groups=["docker", "sudo"]

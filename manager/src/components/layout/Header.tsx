@@ -92,16 +92,16 @@ function Header() {
     return (
         <header className="border-b border-gray-200 flex items-center justify-between px-4 py-2">
             <div className="flex items-center">
-                <h1 className="text-xl font-semibold">BK Management</h1>
+                <h1 className="text-xl font-semibold">Icaht Manager</h1>
                 <div className="ml-4 relative">
-                    <select className="border rounded px-3 py-1 text-sm pr-8">
+                    <select className="border rounded px-2 py-1 text-sm">
                         <option>Production</option>
                         <option>Development</option>
                         <option>Testing</option>
                     </select>
                 </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
                 {slot}
                 <button className="p-2 text-gray-500 hover:text-gray-700 relative">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

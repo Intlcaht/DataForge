@@ -39,6 +39,8 @@
 # │           ├── test_health.py
 # │           └── test_items.py
 
+
+
 def init():
     """
     Initialize the application by:
@@ -50,49 +52,49 @@ def init():
     Returns:
         dict: The loaded configuration from the YAML file
     """
-    from services.storage.local import local_db_controller, DatabaseService, DatabaseCommand
-    from services.env.obfuscator_service import env_obfuscator
-    from controls.db_mng import db_mng_control
-    from core.flow.config_loader import load_config
+    from src.services.storage.local import local_db_controller, DatabaseService, DatabaseCommand
+    from src.services.env.obfuscator_service import env_obfuscator
+    from src.controls.db_mng import db_mng_control
+    from src.core.flow.config_loader import load_config
+    from src.core.utils.scripts import run_env_gen
     # Define the path to the database configuration YAML file
     # This file contains database connection parameters and other settings
     config_file = "app/db.yml"
     
-    # # Generate environment variables (.env file) from the configuration
-    # # Arguments:
-    # #   - "-c": Flag indicating a config file will follow
-    # #   - config_file: Path to the configuration file
-    # #   - "-e .env": Output environment file path
-    # run_env_gen(["-c "] + [config_file] + ["-e dbstack/.env.gen"])
+    # Generate environment variables (.env file) from the configuration
+    # Arguments:
+    #   - "-c": Flag indicating a config file will follow
+    #   - config_file: Path to the configuration file
+    #   - "-e .env": Output environment file path
+    run_env_gen(["-c "] + [config_file] + ["-e provisions/dbstack/.env"])
     
-    # Load the configuration from the YAML file into a dictionary
-    # This will be used throughout the application for various settings
-    config = load_config(config_file=config_file)
-    # Return the loaded configuration for use by other parts of the application
+    # # Load the configuration from the YAML file into a dictionary
+    # # This will be used throughout the application for various settings
+    # config = load_config(config_file=config_file)
+    # # Return the loaded configuration for use by other parts of the application
 
-    # # Examples of using the controller
-    # # result1 = local_db_controller.initialize_stack("SecurePassword123")
-    # result2 = local_db_controller.start_service(DatabaseService.POSTGRES)
-    # result3 = local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
-    # # result4 = local_db_controller.backup_all_databases()
+    # Examples of using the controller
+    local_db_controller.initialize_stack("SecurePassword123")
+
+    success = db_mng_control.provision_databases(config_file=config_file)
+    print(f"Provision result: {success}")
+
+    local_db_controller.start_service(DatabaseService.POSTGRES)
+    local_db_controller.manage_service(DatabaseService.POSTGRES, DatabaseCommand.CONNECT)  # Connect to Postgres CLI
     
-    # print("Results:", result2, result3)
-    # # Provision databases using the default config
-    # success = db_mng_control.provision_databases(config_file=config_file)
-    # print(f"Provision result: {success}")
-    
-    # env_obfuscator.obfuscate(".env", "password6789hjk", "key", ".env.keyd")
-    # env_obfuscator.deobfuscate(".env.keyd", ".env.keyd.mapping.json", "password6789hjk", "key")
+    env_obfuscator.obfuscate(".env", "password6789hjk", "key", ".env.keyd")
+    env_obfuscator.deobfuscate(".env.keyd", ".env.keyd.mapping.json", "password6789hjk", "key")
    
 
 def serve():
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from dotenv import load_dotenv
-    from rest.v1.routers import api_v1_router
-    from core.config import settings  # Contains environment-specific settings
+    from src.rest.v1.routers import api_v1_router
+    from src.core.config import settings  # Contains environment-specific settings
 
-    load_dotenv("dbstack/.env")
+    load_dotenv("provisions/dbstack/.env")
+    load_dotenv(".env")
 
     def create_application() -> FastAPI:
         application = FastAPI(
@@ -137,7 +139,7 @@ def serve():
 
 # Entry point: run the `serve` function only if this file is executed directly (not imported)
 if __name__ == '__main__':
-    # init()
+    init()
     serve()
 
 
