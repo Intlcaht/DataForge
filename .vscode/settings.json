@@ -28,6 +28,7 @@
         "dotenv",
         "DOWNSAMPLE",
         "dropdb",
+        "EBNF",
         "enabledelayedexpansion",
         "encryptor",
         "envoyproxy",
