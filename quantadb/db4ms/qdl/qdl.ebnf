@@ -1,0 +1,412 @@
+(* QuantaQL Grammar: A unified query language for QuantaDB, supporting multiple storage engines
+   (PostgreSQL, MongoDB, Neo4j, InfluxDB). The grammar is case-insensitive for keywords,
+   case-sensitive for identifiers, and uses semicolons to terminate statements. Whitespace is
+   ignored except within string literals. Comments are supported with `--` (single-line) and
+   `/* */` (multi-line). *)
+
+(* Root rule: A QuantaQL program consists of one or more statements *)
+program = statement { ";" statement } [ ";" ] ;
+
+(* A statement can be a schema definition, data operation, graph operation, transaction,
+   security command, or other advanced feature *)
+statement = schema_definition
+          | data_operation
+          | graph_operation
+          | metric_operation
+          | aggregation
+          | transaction
+          | security_command
+          | advanced_feature
+          | spatial_operation
+          | full_text_search
+          | system_configuration
+          | data_migration
+          | monitoring_command ;
+
+(* === Schema Definition === *)
+(* Schema definitions include records, types, indexes, and buckets *)
+schema_definition = record_definition
+                  | type_definition
+                  | index_definition
+                  | bucket_definition ;
+
+(* Record definition: Defines a record with fields and constraints *)
+record_definition = "DEFINE" "RECORD" identifier "IN" identifier
+                    "(" { field_definition "," } field_definition ")" ;
+(* Example: DEFINE RECORD tasks IN task_app (id: SCALAR<UUID> PRIMARY, title: SCALAR<STRING>) *)
+
+field_definition = identifier ":" data_type [ constraint { constraint } ] ;
+(* Fields consist of a name, type, and optional constraints like PRIMARY, UNIQUE, etc. *)
+
+data_type = scalar_type
+          | document_type
+          | relation_type
+          | metric_type
+          | time_type
+          | duration_type
+          | geo_type
+          | array_type
+          | map_type
+          | custom_type ;
+(* Data types map to storage engines: SCALAR (PostgreSQL), DOCUMENT (MongoDB), etc. *)
+
+scalar_type = "SCALAR" "<" scalar_subtype ">" ;
+scalar_subtype = "STRING" | "INT" | "FLOAT" | "BOOLEAN" | "UUID" | "DECIMAL"
+               | "BINARY" | "ENUM" | "DATE" | "TIME" | "IP" | "URL"
+               | "PERCENTAGE" | "CURRENCY" ;
+(* Scalar subtypes define specific primitive types *)
+
+document_type = "DOCUMENT" ;
+relation_type = "RELATION" "<" identifier ">" ("ONE" | "MANY") ;
+metric_type = "METRIC" "<" metric_subtype ">" ;
+metric_subtype = "COUNT" | "GAUGE" | "HISTOGRAM" | "DURATION" | "PERCENTAGE" | "CUSTOM" ;
+time_type = "TIME" ;
+duration_type = "DURATION" ;
+geo_type = "GEO" ;
+array_type = "ARRAY" "<" data_type ">" ;
+map_type = "MAP" "<" scalar_subtype "," data_type ">" ;
+custom_type = "CUSTOM" "<" identifier ">" ;
+
+constraint = "PRIMARY" | "UNIQUE" | "INDEX" | "DEFAULT" expression
+           | "NOT" "NULL" | "CHECK" expression | "REFERENCES" identifier
+           | "ONE" | "MANY" | "NULLABLE" | "IMMUTABLE" ;
+(* Constraints enforce rules like uniqueness, referential integrity, etc. *)
+
+type_definition = "DEFINE" "TYPE" identifier "(" { field_definition "," } field_definition ")" ;
+(* Custom type definition for reusable composite types *)
+
+index_definition = "CREATE" index_type "INDEX" identifier "(" identifier { "," identifier } ")"
+                 [ index_option ] ;
+index_type = "TEXT" | "METRIC" | "GRAPH" | "GEO" | "COMPOUND" | "UNIQUE" | "" ;
+index_option = "RETAIN" string_literal
+             | "TYPE" string_literal
+             | "MAX_DISTANCE" string_literal
+             | "WHERE" condition ;
+
+bucket_definition = "CREATE" "BUCKET" identifier [ bucket_option ] 
+                 | "DROP" "BUCKET" identifier ;
+bucket_option = "WITH" ("RETENTION" string_literal | "REPLICATION" integer) ;
+(* Buckets are logical namespaces for records *)
+
+(* === Data Operations === *)
+data_operation = add_operation
+               | batch_operation
+               | find_operation
+               | update_operation
+               | remove_operation
+               | record_metric ;
+
+add_operation = "ADD" identifier "{" { field_assignment "," } field_assignment "}" ;
+field_assignment = identifier ":" expression ;
+
+batch_operation = "BATCH" "ADD" identifier "[" { "{" { field_assignment "," } field_assignment "}" "," } "{" { field_assignment "," } field_assignment "}" "]" ;
+
+find_operation = "FIND" return_field { "," return_field }
+                 "MATCH" condition
+                 [ "ORDER" "BY" order_field { "," order_field } ]
+                 [ "LIMIT" integer ]
+                 [ "OFFSET" integer ]
+                 [ "CACHE" "FOR" duration_expression ] ;
+return_field = identifier [ "." identifier ]
+             | aggregation_function ;
+order_field = identifier [ "." identifier ] [ "ASC" | "DESC" ] ;
+
+update_operation = "UPDATE" identifier "SET" field_assignment { "," field_assignment }
+                   "MATCH" condition ;
+
+remove_operation = "REMOVE" identifier "MATCH" condition ;
+
+record_metric = "RECORD" identifier "." identifier "(" expression "," expression ")" ;
+
+(* === Graph Operations === *)
+graph_operation = link_operation
+                | unlink_operation
+                | navigate_operation
+                | pattern_operation
+                | graph_algorithm ;
+
+link_operation = "LINK" identifier "(" condition ")" "TO" identifier "(" condition ")"
+                 "AS" string_literal [ "WITH" "{" { field_assignment "," } field_assignment "}" ] ;
+
+unlink_operation = "UNLINK" identifier "(" condition ")" "FROM" identifier "(" condition ")"
+                   [ "WHERE" condition ] ;
+
+navigate_operation = "FIND" return_field { "," return_field }
+                     "NAVIGATE" path_expression
+                     "MATCH" condition ;
+
+pattern_operation = "FIND" return_field { "," return_field }
+                    "PATTERN" pattern_expression
+                    "MATCH" condition
+                    [ "RETURN" "path" ] ;
+
+graph_algorithm = "FIND" return_field { "," return_field } "," algorithm_call "AS" identifier
+                  "GRAPH_ALGORITHM" "("
+                    "NODES" identifier ","
+                    "EDGES" "NAVIGATE" path_expression
+                  ")"
+                  [ additional_clause ] ;
+algorithm_call = identifier "(" [ expression { "," expression } ] ")" ;
+additional_clause = order_clause | limit_clause | offset_clause | cache_clause ;
+
+(* === Metric Operations === *)
+metric_operation = record_metric
+                 | aggregate_metric
+                 | downsample_metric
+                 | continuous_query
+                 | anomaly_detection ;
+
+aggregate_metric = "FIND" return_field { "," return_field }
+                   [ "NAVIGATE" path_expression ]
+                   "MATCH" condition
+                   [ "GROUP" "BY" expression { "," expression } ]
+                   [ "TIME_WINDOW" time_window_expression ] ;
+
+downsample_metric = "FIND" aggregation_function "AS" identifier
+                    "MATCH" condition
+                    "DOWNSAMPLE" "BY" time_interval ;
+
+continuous_query = "CREATE" "CONTINUOUS" "QUERY" identifier
+                   "COMPUTE" aggregation_function "AS" identifier
+                   "MATCH" condition
+                   "DOWNSAMPLE" "BY" time_interval
+                   "STORE" "IN" identifier ;
+
+anomaly_detection = "FIND" return_field { "," return_field }
+                    "MATCH" "DETECT_ANOMALY" "(" identifier "." identifier "," expression ")" "=" boolean
+                    "AND" condition ;
+
+(* === Aggregations === *)
+aggregation = "FIND" aggregation_expression { "," aggregation_expression }
+              [ "NAVIGATE" path_expression ]
+              "MATCH" condition
+              [ "GROUP" "BY" expression { "," expression } ]
+              [ "HAVING" condition ]
+              [ order_clause ]
+              [ limit_clause ] ;
+
+aggregation_expression = aggregation_function
+                       | window_function
+                       | identifier [ "." identifier ] ;
+aggregation_function = ("COUNT" | "SUM" | "AVG" | "MIN" | "MAX" | "MEDIAN"
+                      | "PERCENTILE" | "STDDEV" | "VAR" | "ARRAY" | "DISTINCT"
+                      | "GROUP_CONCAT" | "FIRST" | "LAST" | "TOP_N")
+                      "(" [ expression { "," expression } ] ")" [ "AS" identifier ] ;
+
+window_function = window_function_name "(" expression ")"
+                  "OVER" "("
+                    [ "PARTITION" "BY" expression { "," expression } ]
+                    [ "ORDER" "BY" expression { "," expression } ]
+                    [ window_frame_clause ]
+                  ")" "AS" identifier ;
+window_function_name = "AVG" | "SUM" | "COUNT" | "MIN" | "MAX" | "RANK" | "DENSE_RANK" ;
+window_frame_clause = ("RANGE" | "ROWS") duration_expression ("PRECEDING" | "FOLLOWING") ;
+
+(* === Transactions === *)
+transaction = start_transaction
+            | commit_transaction
+            | rollback_transaction
+            | savepoint ;
+
+start_transaction = "START" "TRANSACTION" [ "ISOLATION" "LEVEL" isolation_level ] ;
+isolation_level = "READ" "UNCOMMITTED" | "READ" "COMMITTED" | "REPEATABLE" "READ" | "SERIALIZABLE" ;
+commit_transaction = "COMMIT" ;
+rollback_transaction = "ROLLBACK" [ "TO" identifier ] ;
+savepoint = "SAVEPOINT" identifier ;
+
+(* === Security & Access Control === *)
+security_command = user_management
+                 | role_management
+                 | permission_management
+                 | row_level_security
+                 | field_encryption
+                 | audit_logging ;
+
+user_management = "CREATE" "USER" identifier "WITH" "PASSWORD" string_literal
+                | "DROP" "USER" identifier ;
+role_management = "CREATE" "ROLE" identifier
+                | "GRANT" "ROLE" identifier "TO" identifier
+                | "REVOKE" "ROLE" identifier "FROM" identifier ;
+permission_management = ("GRANT" | "DENY") permission "ON" object "TO" principal ;
+permission = "FIND" | "ADD" | "UPDATE" | "REMOVE" | "LINK" | "NAVIGATE" | identifier ;
+object = identifier [ "." identifier ] | identifier ;
+principal = identifier | "ROLE" identifier ;
+row_level_security = "CREATE" "POLICY" identifier "ON" identifier "USING" "(" condition ")" ;
+field_encryption = "ALTER" "RECORD" identifier "ENCRYPT" identifier "WITH" "KEY" string_literal ;
+audit_logging = "ENABLE" "AUDIT" identifier "FOR" operation { "," operation } "LOG" "TO" string_literal ;
+operation = "ADD" | "UPDATE" | "REMOVE" | identifier ;
+
+(* === Advanced Features === *)
+advanced_feature = cte
+                 | parameterized_query
+                 | custom_function
+                 | stored_procedure
+                 | trigger
+                 | view
+                 | query_hint ;
+
+cte = "WITH" identifier "AS" "(" query_expression ")" query_expression ;
+parameterized_query = "PREPARE" identifier "AS" query_expression
+                    | "EXECUTE" identifier "(" [ expression { "," expression } ] ")" ;
+custom_function = "DEFINE" "FUNCTION" identifier "(" [ parameter { "," parameter } ] ")"
+                  "RETURNS" data_type "AS" expression ;
+stored_procedure = "DEFINE" "PROCEDURE" identifier "(" [ parameter { "," parameter } ] ")"
+                   "AS" "BEGIN" { statement ";" } "END" ;
+parameter = identifier ":" data_type ;
+trigger = "CREATE" "TRIGGER" identifier ("BEFORE" | "AFTER") event
+          "ON" identifier
+          [ "FOR" "EACH" ("ROW" | "STATEMENT") ]
+          [ "WHEN" condition ]
+          "EXECUTE" "(" { statement ";" } ")" ;
+event = "ADD" | "UPDATE" | "REMOVE" | identifier ;
+view = "CREATE" "VIEW" identifier "AS" query_expression ;
+query_hint = "FIND" return_field { "," return_field }
+             "MATCH" condition
+             "HINT" hint_type "(" expression ")" ;
+hint_type = "FORCE_INDEX" | "PARALLEL" | "CACHE_RESULT" | "NO_GRAPH_CACHE" | "PREFER_ENGINE" ;
+
+(* === Spatial Operations === *)
+spatial_operation = "FIND" return_field { "," return_field }
+                   "MATCH" spatial_function "=" expression
+                   [ "ORDER" "BY" spatial_function ] ;
+spatial_function = "distance" "(" geo_expression "," geo_expression ")"
+                 | "contains" "(" geo_expression "," geo_expression ")"
+                 | "intersects" "(" geo_expression "," geo_expression ")"
+                 | "nearby" "(" identifier "," geo_expression "," string_literal ")" ;
+geo_expression = "point" "(" expression "," expression ")"
+               | "polygon" "(" "[" [ point { "," point } ] "]" ")"
+               | "line" "(" "[" [ point { "," point } ] "]" ")"
+               | "circle" "(" expression "," expression "," expression ")" ;
+point = "[" expression "," expression "]" ;
+
+(* === Full-Text Search === *)
+full_text_search = "FIND" return_field { "," return_field }
+                   "MATCH" "TEXT_SEARCH" "(" identifier "." identifier "," string_literal ")" [ text_search_option ]
+                   [ "ORDER" "BY" "TEXT_SCORE" [ "DESC" ] ] ;
+text_search_option = "WITH" ("FUZZY" | "EXACT" | "STEMMING") ;
+text_index = "CREATE" "TEXT_INDEX" identifier "(" identifier ")" [ text_index_option ] ;
+text_index_option = "WITH" "LANGUAGE" string_literal "," "ANALYZER" string_literal ;
+text_function = "TEXT_SCORE"
+              | "TEXT_CONTAINS" "(" identifier "," string_literal ")"
+              | "TEXT_EXTRACT" "(" identifier "," string_literal ")"
+              | "TEXT_SUMMARIZE" "(" identifier "," integer ")"
+              | "TEXT_SENTIMENT" "(" identifier ")"
+              | "TEXT_ENTITIES" "(" identifier ")"
+              | "TEXT_CLASSIFY" "(" identifier "," string_literal ")" ;
+
+(* === Data Migration === *)
+data_migration = copy_operation
+               | import_operation
+               | export_operation ;
+
+copy_operation = "COPY" identifier "TO" identifier
+                 "TRANSFORM" "(" { field_assignment "," } field_assignment ")"
+                 "MATCH" condition ;
+import_operation = "IMPORT" "INTO" identifier
+                   "FROM" string_literal
+                   "FORMAT" format_type
+                   [ "TRANSFORM" "(" { transform_assignment "," } transform_assignment ")" ] ;
+export_operation = "EXPORT" "FROM" identifier
+                   "TO" string_literal
+                   "FORMAT" format_type
+                   "MATCH" condition ;
+format_type = "CSV" | "JSON" | identifier ;
+transform_assignment = identifier "=" expression ;
+
+(* === Monitoring & Observability === *)
+monitoring_command = query_metrics
+                   | health_check
+                   | alert
+                   | explain_plan ;
+
+query_metrics = "FIND" "system.query_metrics" "." identifier
+                "MATCH" condition ;
+health_check = "CHECK" "HEALTH" [ "STORAGE_ENGINE" "(" identifier { "," identifier } ")" ] ;
+alert = "CREATE" "ALERT" identifier
+        "ON" identifier "." identifier
+        "WHEN" condition
+        "OVER" time_window_expression
+        "NOTIFY" notification_target ;
+notification_target = "webhook" "(" string_literal ")" ;
+explain_plan = "EXPLAIN" [ "ANALYZE" ] query_expression ;
+
+(* === System Configuration === *)
+system_configuration = storage_engine_config
+                     | query_engine_config
+                     | cache_config ;
+
+storage_engine_config = "CONFIGURE" "STORAGE_ENGINE" identifier
+                        "SET" identifier "=" expression ;
+query_engine_config = "CONFIGURE" "QUERY_ENGINE"
+                      "SET" identifier "=" expression ;
+cache_config = "CONFIGURE" "CACHE"
+               "SET" identifier "=" expression ;
+
+(* === Common Elements === *)
+query_expression = find_operation
+                 | navigate_operation
+                 | pattern_operation
+                 | graph_algorithm
+                 | aggregate_metric
+                 | downsample_metric
+                 | spatial_operation
+                 | full_text_search ;
+
+condition = expression
+          | condition ("AND" | "OR") condition
+          | "NOT" condition
+          | "(" condition ")"
+          | identifier comparison_operator expression
+          | identifier "IN" "(" expression { "," expression } ")"
+          | identifier "INCLUDES" expression
+          | spatial_function
+          | text_function
+          | "DETECT_ANOMALY" "(" identifier "." identifier "," expression ")" ;
+
+expression = literal
+           | identifier [ "." identifier ]
+           | function_call
+           | "(" expression ")"
+           | expression operator expression
+           | case_expression
+           | geo_expression
+           | duration_expression
+           | time_expression ;
+
+literal = string_literal
+        | integer
+        | float
+        | boolean
+        | "NULL"
+        | array_literal
+        | map_literal ;
+string_literal = "\"" { character } "\"" | "'" { character } "'" ;
+integer = digit { digit } ;
+float = digit { digit } "." digit { digit } ;
+boolean = "true" | "false" ;
+array_literal = "[" [ expression { "," expression } ] "]" ;
+map_literal = "{" [ identifier ":" expression { "," identifier ":" expression } ] "}" ;
+
+function_call = identifier "(" [ expression { "," expression } ] ")" ;
+case_expression = "CASE" { "WHEN" condition "THEN" expression } [ "ELSE" expression ] "END" ;
+
+operator = "+" | "-" | "*" | "/" | "=" | "!=" | "<" | ">" | "<=" | ">=" | "AND" | "OR" ;
+comparison_operator = "=" | "!=" | "<" | ">" | "<=" | ">=" ;
+
+path_expression = identifier [ "->" identifier ":" identifier ] { "," identifier [ "->" identifier ":" identifier ] } ;
+pattern_expression = "(" identifier ":" identifier ")" [ "->" "[" identifier "*" [ integer ".." integer ] "]" "->" ] "(" identifier ":" identifier ")" ;
+
+time_expression = "time" "(" string_literal ")" | "now" "(" ")" ;
+duration_expression = "duration" "(" string_literal ")" ;
+time_window_expression = "time" "(" string_literal ")" ;
+time_interval = "time" "(" string_literal ")" ;
+
+identifier = letter { letter | digit | "_" } ;
+letter = "A" | "B" | ... | "Z" | "a" | "b" | ... | "z" ;
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+character = letter | digit | "_" | "-" | " " | ... ; (* Any valid character in string literals *)
+
+order_clause = "ORDER" "BY" order_field { "," order_field } ;
+limit_clause = "LIMIT" integer ;
+offset_clause = "OFFSET" integer ;
+cache_clause = "CACHE" "FOR" duration_expression ;
