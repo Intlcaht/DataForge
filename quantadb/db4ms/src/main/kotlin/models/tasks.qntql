@@ -1,0 +1,49 @@
+-- Define the TaskMetadata custom type
+DEFINE TYPE TaskMetadata (
+  category: SCALAR<STRING>,
+  estimated_effort: DURATION,
+  notes: DOCUMENT
+);
+
+-- Define the tasks record
+DEFINE RECORD tasks IN task_app (
+  id: SCALAR<UUID> PRIMARY,
+  title: SCALAR<STRING> INDEX,
+  description: DOCUMENT,
+  status: SCALAR<STRING> DEFAULT "pending",
+  priority: SCALAR<STRING> DEFAULT "medium",
+  created_at: TIME DEFAULT NOW(),
+  due_date: TIME,
+  completion_time: METRIC<DURATION>,
+  assignees: RELATION<users> MANY,
+  project: RELATION<projects> ONE,
+  tags: ARRAY<SCALAR<STRING>>,
+  metadata: TaskMetadata
+);
+
+-- Define the projects record
+DEFINE RECORD projects IN task_app (
+  id: SCALAR<UUID> PRIMARY,
+  name: SCALAR<STRING> UNIQUE INDEX,
+  description: DOCUMENT,
+  created_at: TIME DEFAULT NOW(),
+  progress: METRIC<PERCENTAGE>,
+  owner: RELATION<users> ONE,
+  tasks: RELATION<tasks> MANY
+);
+
+-- Define the users record
+DEFINE RECORD users IN task_app (
+  id: SCALAR<UUID> PRIMARY,
+  username: SCALAR<STRING> UNIQUE INDEX,
+  email: SCALAR<STRING> UNIQUE,
+  profile: DOCUMENT,
+  task_count: METRIC<COUNT>,
+  collaborators: RELATION<users> MANY
+);
+
+-- Create indexes for efficient querying
+CREATE INDEX tasks(due_date, status);
+CREATE TEXT_INDEX tasks(description.text);
+CREATE METRIC_INDEX tasks(completion_time) RETAIN "90d";
+CREATE GRAPH_INDEX tasks(assignees) TYPE "assigned_to";
